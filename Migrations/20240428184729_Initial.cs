@@ -30,7 +30,9 @@ namespace Reservio.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Code = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    isReserved = table.Column<bool>(type: "bit", nullable: false, defaultValue: false) // Add isReserved column
+
                 },
                 constraints: table =>
                 {

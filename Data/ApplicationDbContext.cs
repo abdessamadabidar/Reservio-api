@@ -21,7 +21,7 @@ namespace Reservio.Data
         {
             modelBuilder.Entity<RoleUser>()
                 .HasKey(ru => new { ru.UserId, ru.RoleId });
-
+            modelBuilder.Entity<Room>().Property(r => r.isReserved).HasDefaultValue(false);
             modelBuilder.Entity<RoleUser>()
                 .HasOne(ru => ru.User)
                 .WithMany(u => u.UserRoles)
