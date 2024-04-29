@@ -1,5 +1,7 @@
 ﻿
 
+using System.ComponentModel.DataAnnotations;
+
 namespace Reservio.Dto
 {
     public class UserDto
@@ -8,6 +10,7 @@ namespace Reservio.Dto
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
         public string Email { get; set; } = null!;
+        public string Password { get; set; } = null!;
         public bool IsApproved { get; set; } = false;
         public bool IsActivated { get; set; } = true;
         public DateTime CreatedAt { get; set; }
