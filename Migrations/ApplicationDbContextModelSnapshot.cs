@@ -100,14 +100,24 @@ namespace Reservio.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
                     b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("Reservio.Models.RoleUser", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("RoleUsers");
                 });
 
             modelBuilder.Entity("Reservio.Models.Room", b =>
@@ -204,11 +214,28 @@ namespace Reservio.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Reservio.Models.RoleUser", b =>
+                {
+                    b.HasOne("Reservio.Models.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Reservio.Models.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Reservio.Models.Role", b =>
                 {
-                    b.HasOne("Reservio.Models.User", null)
-                        .WithMany("Roles")
-                        .HasForeignKey("UserId");
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("Reservio.Models.Room", b =>
@@ -222,7 +249,7 @@ namespace Reservio.Migrations
 
                     b.Navigation("Reservations");
 
-                    b.Navigation("Roles");
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

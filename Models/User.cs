@@ -23,7 +23,7 @@ namespace Reservio.Models
         public DateTime? DeletedAt { get; set; }
         public ICollection<Notification> Notifications { get; set; }
         public ICollection<Reservation> Reservations { get; set; }
-        public ICollection<Role> Roles { get; set; }
+        public ICollection<RoleUser> UserRoles { get; set; }
 
    
     }

@@ -13,11 +13,26 @@ namespace Reservio.Data
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<RoleUser> RoleUsers { get; set; }
         public DbSet<Notification> Notifications { get; set; }
          
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-        { 
+        {
+            modelBuilder.Entity<RoleUser>()
+                .HasKey(ru => new { ru.UserId, ru.RoleId });
+
+            modelBuilder.Entity<RoleUser>()
+                .HasOne(ru => ru.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ru => ru.UserId);
+
+            modelBuilder.Entity<RoleUser>()
+                .HasOne(ru => ru.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ru => ru.RoleId);
+
+
             modelBuilder.Entity<Reservation>()
                 .HasKey(r => new { r.UserId, r.RoomId, r.StartDateTime });
 
