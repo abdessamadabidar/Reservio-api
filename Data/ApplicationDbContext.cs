@@ -17,7 +17,22 @@ namespace Reservio.Data
          
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-        { 
+
+        {
+            modelBuilder.Entity<RoleUser>()
+                .HasKey(ru => new { ru.UserId, ru.RoleId });
+            modelBuilder.Entity<Room>().Property(r => r.isReserved).HasDefaultValue(false);
+            modelBuilder.Entity<RoleUser>()
+                .HasOne(ru => ru.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ru => ru.UserId);
+
+            modelBuilder.Entity<RoleUser>()
+                .HasOne(ru => ru.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ru => ru.RoleId);
+
+
             modelBuilder.Entity<Reservation>()
                 .HasKey(r => new { r.UserId, r.RoomId, r.StartDateTime });
 

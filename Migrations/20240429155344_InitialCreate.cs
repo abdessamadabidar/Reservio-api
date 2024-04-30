@@ -5,43 +5,10 @@
 namespace Reservio.Migrations
 {
     /// <inheritdoc />
-    public partial class RefactorDatabaseRelations : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropTable(
-                name: "RoleUsers");
-
-            migrationBuilder.AddColumn<int>(
-                name: "UserId",
-                table: "Roles",
-                type: "int",
-                nullable: true);
-
-
-            migrationBuilder.AddColumn<int>(
-                name: "isReserved",
-                table: "Rooms",
-                type: "bool",
-                nullable: false,
-                defaultValue : false); 
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Roles_UserId",
-                table: "Roles",
-                column: "UserId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Roles_Users_UserId",
-                table: "Roles",
-                column: "UserId",
-                principalTable: "Users",
-                principalColumn: "Id");
-        }
-
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_Roles_Users_UserId",
@@ -59,8 +26,8 @@ namespace Reservio.Migrations
                 name: "RoleUsers",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    RoleId = table.Column<int>(type: "int", nullable: false)
+                    RoleId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -83,6 +50,31 @@ namespace Reservio.Migrations
                 name: "IX_RoleUsers_RoleId",
                 table: "RoleUsers",
                 column: "RoleId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "RoleUsers");
+
+            migrationBuilder.AddColumn<int>(
+                name: "UserId",
+                table: "Roles",
+                type: "int",
+                nullable: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Roles_UserId",
+                table: "Roles",
+                column: "UserId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Roles_Users_UserId",
+                table: "Roles",
+                column: "UserId",
+                principalTable: "Users",
+                principalColumn: "Id");
         }
     }
 }
