@@ -13,11 +13,11 @@ namespace Reservio.Data
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
         public DbSet<Role> Roles { get; set; }
-        public DbSet<RoleUser> RoleUsers { get; set; }
         public DbSet<Notification> Notifications { get; set; }
          
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
+
         {
             modelBuilder.Entity<RoleUser>()
                 .HasKey(ru => new { ru.UserId, ru.RoleId });

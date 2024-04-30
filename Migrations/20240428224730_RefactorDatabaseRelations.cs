@@ -18,12 +18,15 @@ namespace Reservio.Migrations
                 table: "Roles",
                 type: "int",
                 nullable: true);
+
+
             migrationBuilder.AddColumn<int>(
                 name: "isReserved",
                 table: "Rooms",
                 type: "bool",
                 nullable: false,
                 defaultValue : false); 
+
             migrationBuilder.CreateIndex(
                 name: "IX_Roles_UserId",
                 table: "Roles",
