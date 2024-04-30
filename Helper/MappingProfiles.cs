@@ -9,6 +9,7 @@ namespace Reservio.Helper
        public MappingProfiles()
         {
             CreateMap<User, UserDto>();
+            CreateMap<UserDto, User>();
         }
     }
 }

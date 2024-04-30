@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Reservio.Models
 {
-    public class Reservation
+    public class Reservation : BaseEntity
     {
         [Required]
         public DateTime StartDateTime { get; set; }
@@ -11,9 +11,6 @@ namespace Reservio.Models
         public DateTime EndDateTime { get; set; }
         [Required]
         public string Description { get; set; } = null!;
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public DateTime? DeletedAt { get; set; }
 
         [ForeignKey("UserId")]
         public int UserId { get; set; }

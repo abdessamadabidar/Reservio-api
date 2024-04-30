@@ -2,7 +2,7 @@
 
 namespace Reservio.Models
 {
-    public class Room
+    public class Room : BaseEntity
     {
         [Key]
         public int Id { get; set; }
