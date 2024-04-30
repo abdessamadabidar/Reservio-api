@@ -26,7 +26,7 @@ namespace Reservio.Repositories {
             return _context.Rooms.Where(r => r.isReserved == true).ToList();
         }
 
-        public Room GetRoomById(int roomId)
+        public Room GetRoomById(Guid roomId)
         {
             return _context.Rooms.Where(r => r.Id == roomId).FirstOrDefault();
         }

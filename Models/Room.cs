@@ -6,7 +6,8 @@ namespace Reservio.Models
     public class Room : BaseEntity
     {
         [Key]
-        public int Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public Guid Id { get; set; }
         [Required]
         public string Code { get; set; } = null!;
 

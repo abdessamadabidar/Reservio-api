@@ -56,9 +56,9 @@ namespace Reservio.Controllers
 
             return Ok(rooms);
         }
-        [HttpGet("Room/{roomId}")]
+        [HttpGet("Room/{roomId:guid}")]
         [ProducesResponseType(200, Type = typeof(RoomDto))]
-        public IActionResult GetRoomById(int roomId)
+        public IActionResult GetRoomById(Guid roomId)
         {
             var room = _mapper.Map<RoomDto>(_roomRepository.GetRoomById(roomId));
             if (!ModelState.IsValid)

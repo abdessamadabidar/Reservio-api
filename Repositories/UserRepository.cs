@@ -31,7 +31,7 @@ namespace Reservio.Repositories
             return _context.Users.OrderByDescending(user => user.CreatedAt).ToList();
         }
 
-        public User GetUserById(int id)
+        public User GetUserById(Guid id)
         {
             return _context.Users.Find(id);
         }
@@ -58,7 +58,7 @@ namespace Reservio.Repositories
             return Save();
         }
 
-        public bool UserExists(int id)
+        public bool UserExists(Guid id)
         {
             return _context.Users.Any(user => user.Id == id);
         }

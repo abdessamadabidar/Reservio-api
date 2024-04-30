@@ -7,7 +7,7 @@ namespace Reservio.Interfaces
         ICollection<Room> GetAllRooms();
         ICollection<Room> GetReservedRooms();
         ICollection<Room> GetUnReservedRooms();
-        Room GetRoomById(int roomId);
+        Room GetRoomById(Guid roomId);
         bool CreateRoom(Room roomMap);
     }
 }

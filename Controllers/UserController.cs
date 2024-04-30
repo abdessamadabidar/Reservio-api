@@ -32,10 +32,10 @@ namespace Reservio.Controllers
             return Ok(users);
         }
 
-        [HttpGet("{UserId:int}")]
+        [HttpGet("{UserId:guid}")]
         [ProducesResponseType(200, Type = typeof(UserDto))]
         [ProducesResponseType(400)]
-        public IActionResult GetUserById(int UserId)
+        public IActionResult GetUserById(Guid UserId)
         {
             if (!_userRepository.UserExists(UserId))
                 return NotFound();
@@ -103,11 +103,11 @@ namespace Reservio.Controllers
             return Ok("User created successfully");
         }
 
-        [HttpPut("{UserId:int}")]
+        [HttpPut("{UserId:guid}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult UpdateUser(int UserId, [FromBody] UserDto updatedUserDto)
+        public IActionResult UpdateUser(Guid UserId, [FromBody] UserDto updatedUserDto)
         {
             if (updatedUserDto == null || UserId != updatedUserDto.Id)
             {
@@ -135,11 +135,11 @@ namespace Reservio.Controllers
             return Ok("User updated successfully");
         }
 
-        [HttpDelete("{UserId:int}")]
+        [HttpDelete("{UserId:guid}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult DeleteUser(int UserId)
+        public IActionResult DeleteUser(Guid UserId)
         {
             if (!_userRepository.UserExists(UserId))
             {

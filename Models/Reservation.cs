@@ -13,10 +13,10 @@ namespace Reservio.Models
         public string Description { get; set; } = null!;
 
         [ForeignKey("UserId")]
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
 
         [ForeignKey("RoomId")]
-        public int RoomId { get; set; }
+        public Guid RoomId { get; set; }
         public User User { get; set; } = null!;
         public Room Room { get; set; } = null!;
     }

@@ -6,7 +6,8 @@ namespace Reservio.Models
     public class Notification
     {
         [Key]
-        public int Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public Guid Id { get; set; }
         [Required]
         public string Title { get; set; } = null!;
         [Required]
@@ -15,7 +16,7 @@ namespace Reservio.Models
         public DateTime CreatedAt { get; set; }
 
         [ForeignKey("UserId")]
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public User User { get; set; } = null!;
     }
 }
