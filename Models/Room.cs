@@ -12,7 +12,7 @@ namespace Reservio.Models
 
         public bool isReserved = false;
 
-        public Room(string code )
+        public Room(string code)
         {
             Code = code;
         }
