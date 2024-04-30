@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Reservio.Dto;
 using Reservio.Models;
 
@@ -9,6 +9,7 @@ namespace Reservio.Helper
        public MappingProfiles()
         {
             CreateMap<User, UserDto>();
+            CreateMap<UserDto, User>();
             CreateMap<Room, RoomDto>();
         }
     }

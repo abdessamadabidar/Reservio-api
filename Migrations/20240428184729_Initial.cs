@@ -152,6 +152,7 @@ namespace Reservio.Migrations
                 name: "IX_RoleUsers_RoleId",
                 table: "RoleUsers",
                 column: "RoleId");
+
         }
 
         /// <inheritdoc />
