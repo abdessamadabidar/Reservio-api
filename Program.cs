@@ -2,12 +2,15 @@ using Microsoft.EntityFrameworkCore;
 using Reservio.Data;
 using Reservio.Interfaces;
 using Reservio.Repositories;
+using Reservio.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<IRoomService, RoomService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

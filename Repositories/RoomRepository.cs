@@ -4,7 +4,8 @@ using Reservio.Interfaces;
 using Reservio.Models;
 
 namespace Reservio.Repositories {
-    public class RoomRepository : IRoomRepository {
+    public class RoomRepository : IRoomRepository
+    {
         private readonly ApplicationDbContext _context;
         public RoomRepository(ApplicationDbContext context) { 
             _context= context;
@@ -13,7 +14,13 @@ namespace Reservio.Repositories {
         public bool CreateRoom(Room roomMap)
         {
             _context.Add(roomMap);
-            return _context.SaveChanges() > 0 ? true : false;
+            return Save();
+        }
+
+        public bool DeleteRoom(Room roomMap)
+        {
+            _context.Remove(roomMap);
+            return Save();
         }
 
         public ICollection<Room> GetAllRooms()
@@ -34,6 +41,23 @@ namespace Reservio.Repositories {
         public ICollection<Room> GetUnReservedRooms()
         {
             return _context.Rooms.Where(r => r.isReserved == false).ToList();
+        }
+
+        public bool RoomExists(Guid id)
+        {
+            return _context.Rooms.Any(room => room.Id == id);
+        }
+
+        public bool Save()
+        {
+            var saved = _context.SaveChanges();
+            return saved > 0;
+        }
+
+        public bool UpdateRoom(Room roomMap)
+        {
+            _context.Update(roomMap);
+            return Save();
         }
     }
 }

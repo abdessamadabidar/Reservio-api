@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Reservio.Dto;
 using Reservio.Interfaces;
-using Reservio.Models;
+
 
 namespace Reservio.Controllers
 {
@@ -10,20 +10,18 @@ namespace Reservio.Controllers
     [ApiController]
     public class UserController : Controller
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IMapper _mapper;
+        private readonly IUserService _userService;
 
-        public UserController(IUserRepository userRepository, IMapper mapper)
+        public UserController(IUserService userService, IMapper mapper)
         {
-            _userRepository = userRepository;
-            _mapper = mapper;
+            _userService = userService;
         }
 
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(ICollection<UserDto>))]
         public IActionResult GetAllUsers()
         {
-            var users = _mapper.Map<List<UserDto>>(_userRepository.GetAllUsers());
+            var users = _userService.GetAllUsers();
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -37,10 +35,10 @@ namespace Reservio.Controllers
         [ProducesResponseType(400)]
         public IActionResult GetUserById(Guid UserId)
         {
-            if (!_userRepository.UserExists(UserId))
+            if (!_userService.UserExists(UserId))
                 return NotFound();
 
-            var user = _mapper.Map<UserDto>(_userRepository.GetUserById(UserId));
+            var user = _userService.GetUserById(UserId);
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -55,7 +53,7 @@ namespace Reservio.Controllers
         public IActionResult GetUserByRole(string Role)
         {
 
-            var users = _mapper.Map<IEnumerable<UserDto>>(_userRepository.GetUsersByRole(Role));
+            var users = _userService.GetUsersByRole(Role);
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -74,7 +72,7 @@ namespace Reservio.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = _userRepository
+            var user = _userService
                 .GetAllUsers()
                 .Where(user => user.Email == newUserDto.Email)
                 .FirstOrDefault();
@@ -91,12 +89,10 @@ namespace Reservio.Controllers
                 return BadRequest(ModelState);
             }
 
-            
-            var userMap = _mapper.Map<User>(newUserDto);
 
-            if (!_userRepository.CreateUser(userMap))
+            if (!_userService.CreateUser(newUserDto))
             {
-                ModelState.AddModelError("", $"Something went wrong saving the user {userMap.Email}");
+                ModelState.AddModelError("", $"Something went wrong saving the user {newUserDto.Email}");
                 return StatusCode(500, ModelState);
             }
 
@@ -114,7 +110,7 @@ namespace Reservio.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (!_userRepository.UserExists(UserId))
+            if (!_userService.UserExists(UserId))
             {
                 return NotFound();
             }
@@ -124,11 +120,11 @@ namespace Reservio.Controllers
                 return BadRequest(ModelState);
             }
             
-            var userMap = _mapper.Map<User>(updatedUserDto);
+            
 
-            if (!_userRepository.UpdateUser(userMap))
+            if (!_userService.UpdateUser(updatedUserDto))
             {
-                ModelState.AddModelError("", $"Something went wrong updating the user {userMap.Email}");
+                ModelState.AddModelError("", $"Something went wrong updating the user {updatedUserDto.Email}");
                 return StatusCode(500, ModelState);
             }
 
@@ -141,20 +137,20 @@ namespace Reservio.Controllers
         [ProducesResponseType(404)]
         public IActionResult DeleteUser(Guid UserId)
         {
-            if (!_userRepository.UserExists(UserId))
+            if (!_userService.UserExists(UserId))
             {
                 return NotFound();
             }
 
-            var userToDelete = _userRepository.GetUserById(UserId);
+            
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (!_userRepository.DeleteUser(userToDelete))
+            if (!_userService.DeleteUser(UserId))
             {
-                ModelState.AddModelError("", $"Something went wrong deleting the user {userToDelete.Email}");
+                ModelState.AddModelError("", "Something went wrong deleting the user");
                 return StatusCode(500, ModelState);
             }
 

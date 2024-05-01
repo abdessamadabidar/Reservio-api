@@ -5,5 +5,6 @@ namespace Reservio.Dto {
         public Guid Id { get; set; }
         public string Code { get; set; } = null!;
         public bool isReserved { get; set; }
+
     }
 }
