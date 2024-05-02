@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reservio.Dto;
 using Reservio.Interfaces;
@@ -19,6 +21,7 @@ namespace Reservio.Controllers
 
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(ICollection<UserDto>))]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "USER")]
         public IActionResult GetAllUsers()
         {
             var users = _userService.GetAllUsers();

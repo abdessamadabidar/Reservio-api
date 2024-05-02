@@ -17,6 +17,6 @@ namespace Reservio.Models
         {
             Code = code;
         }
-        public ICollection<Reservation> Reservations { get; set; }
+        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
     }
 }

@@ -33,9 +33,19 @@ namespace Reservio.Services
             return _userRepository.DeleteUser(userToDelete);
         }
 
+        public User GetUserByEmail(string email)
+        {
+            return _userRepository.GetUserByEmail(email);
+        }
+
         public UserDto GetUserById(Guid id)
         {
             return _mapper.Map<UserDto>(_userRepository.GetUserById(id));
+        }
+
+        public IEnumerable<string> GetUserRoles(User user)
+        {
+            return _userRepository.GetUserRoles(user);
         }
 
         public IEnumerable<UserDto> GetUsersByRole(string roleName)

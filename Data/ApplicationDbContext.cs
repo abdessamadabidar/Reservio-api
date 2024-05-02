@@ -55,6 +55,10 @@ namespace Reservio.Data
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
+            modelBuilder.Entity<Room>()
+                .HasIndex(r => r.Code)
+                .IsUnique();
+
             modelBuilder.Entity<User>()
                 .Property(User => User.CreatedAt)
                 .HasDefaultValueSql("GETDATE()");
@@ -81,6 +85,21 @@ namespace Reservio.Data
                             entry.CurrentValues["DeletedAt"] = DateTime.Now;
                             break;
                     }
+                }
+            }
+
+
+            var recentlyAddedUsers = ChangeTracker
+                .Entries<User>()
+                .Where(e => e.State == EntityState.Added)
+                .Select(e => e.Entity);
+
+            foreach (var user in recentlyAddedUsers)
+            {
+                var role = Roles?.FirstOrDefault(r => r.Name == "USER");
+                if (role != null)
+                {
+                    user.UserRoles.Add(new RoleUser { RoleId = role.Id, UserId = user.Id,  User = user, Role = role });
                 }
             }
 

@@ -12,7 +12,7 @@ using Reservio.Data;
 namespace Reservio.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240430233333_Initial")]
+    [Migration("20240502010241_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -128,7 +128,7 @@ namespace Reservio.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAddOrUpdate()
@@ -146,6 +146,9 @@ namespace Reservio.Migrations
                         .HasDefaultValue(false);
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.ToTable("Rooms");
                 });

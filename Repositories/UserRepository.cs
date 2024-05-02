@@ -31,12 +31,24 @@ namespace Reservio.Repositories
             return _context.Users.OrderByDescending(user => user.CreatedAt).ToList();
         }
 
+        public User GetUserByEmail(string email)
+        {
+            return _context.Users.FirstOrDefault(user => user.Email == email);
+        }
+
         public User GetUserById(Guid id)
         {
             return _context.Users.Find(id);
         }
 
-       
+        public IEnumerable<string> GetUserRoles(User user)
+        {
+            return from role in _context.Roles
+                   join userRole in _context.RoleUsers on role.Id equals userRole.RoleId
+                   where userRole.UserId == user.Id
+                   select role.Name;
+        }
+
         public IEnumerable<User> GetUsersByRole(string roleName)
         {
             return from user in _context.Users

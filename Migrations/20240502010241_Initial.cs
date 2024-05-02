@@ -28,7 +28,7 @@ namespace Reservio.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     isReserved = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -150,6 +150,12 @@ namespace Reservio.Migrations
                 name: "IX_RoleUsers_RoleId",
                 table: "RoleUsers",
                 column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Rooms_Code",
+                table: "Rooms",
+                column: "Code",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",

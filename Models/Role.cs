@@ -9,6 +9,6 @@ namespace Reservio.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
-        public ICollection<RoleUser> UserRoles { get; set; }
+        public ICollection<RoleUser> UserRoles { get; set; } = new List<RoleUser>();
     }
 }

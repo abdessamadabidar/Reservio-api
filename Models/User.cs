@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -21,9 +22,9 @@ namespace Reservio.Models
         public bool IsApproved { get; set; } = false;
         public bool IsActivated { get; set; } = true;
         public DateTime? VerifiedAt { get; set; }
-        public ICollection<Notification> Notifications { get; set; }
-        public ICollection<Reservation> Reservations { get; set; }
-        public ICollection<RoleUser> UserRoles { get; set; }
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+        public ICollection<RoleUser> UserRoles { get; set; } = new List<RoleUser>();
 
    
         

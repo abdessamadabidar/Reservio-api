@@ -1,4 +1,5 @@
-﻿using Reservio.Models;
+﻿using Microsoft.AspNetCore.Identity;
+using Reservio.Models;
 
 namespace Reservio.Interfaces
 {
@@ -11,6 +12,8 @@ namespace Reservio.Interfaces
         bool CreateUser(User user);
         bool UpdateUser(User user);
         bool DeleteUser(User user);
+        User GetUserByEmail(string email);
+        IEnumerable<string> GetUserRoles(User user);
         bool Save();
     }
 }
