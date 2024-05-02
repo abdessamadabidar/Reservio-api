@@ -7,5 +7,7 @@ namespace Reservio.Interfaces
     {
         public IResult Login(AuthenticateRequest authenticateRequest);
         public IResult Register(RegisterRequest registerUser);
+        public bool Verify(Guid Id);
+        public bool UserVerified(Guid Id);
     }
 }

@@ -16,12 +16,14 @@ namespace Reservio.Services
             _mapper = mapper;
         }
 
-        public bool RegisterUser(RegisterRequest registerRequest)
+        public RegisterResponse RegisterUser(RegisterRequest registerRequest)
         {
             registerRequest.Password = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password);
             var userMap = _mapper.Map<User>(registerRequest);
+            if (userMap == null || !_userRepository.CreateUser(userMap))
+                return null;
 
-            return _userRepository.CreateUser(userMap);
+            return _mapper.Map<RegisterResponse>(userMap);
         }
 
         public bool DeleteUser(Guid userId)
@@ -67,6 +69,26 @@ namespace Reservio.Services
         ICollection<UserDto> IUserService.GetAllUsers()
         {
             return _mapper.Map<ICollection<UserDto>>(_userRepository.GetAllUsers());
+        }
+
+        public bool VerifyUser(Guid id)
+        {
+            var user = _userRepository.GetUserById(id);
+            if (user == null)
+                return false;
+
+            user.VerifiedAt = DateTime.Now;
+            return _userRepository.UpdateUser(user);
+
+        }
+
+        public bool UserVerified(Guid id)
+        {
+            var user = _userRepository.GetUserById(id);
+            if (user == null)
+                return false;
+
+            return user.VerifiedAt != null;
         }
     }
 }

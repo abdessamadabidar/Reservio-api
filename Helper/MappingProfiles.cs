@@ -14,6 +14,8 @@ namespace Reservio.Helper
             CreateMap<RoomDto, Room>();
             CreateMap<User, RegisterRequest>();
             CreateMap<RegisterRequest, User>();
+            CreateMap<User, RegisterResponse>();
+            CreateMap<RegisterResponse, User>();
         }
     }
 }

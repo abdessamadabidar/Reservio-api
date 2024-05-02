@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Reservio.Email;
 using Reservio.Interfaces;
 using Reservio.Models;
 
@@ -13,10 +13,10 @@ namespace Reservio.Controllers
     public class AuthController : Controller
     {
         private readonly IAuthService _authService;
+
         public AuthController(IAuthService authService)
         {
             _authService = authService;
-
         }
 
         [HttpPost("login")]
@@ -49,7 +49,29 @@ namespace Reservio.Controllers
             return _authService.Register(registerRequest);
         }
 
+        [HttpGet("verify/{Id:guid}")]
+        [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(400)]
+        public IActionResult Verify(Guid Id)
+        {
+            if (Id == Guid.Empty)
+            {
+                return BadRequest("Invalid request");
+            }
 
+            if (_authService.UserVerified(Id))
+            {
+                return BadRequest("User is already verified");
+            }
+
+            if (!_authService.Verify(Id))
+            {
+                return BadRequest("Could not verify the user");
+            }
+
+
+            return Ok("Account verified successfully");
+        }
 
 
     }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Reservio.Data;
+using Reservio.Email;
 using Reservio.Interfaces;
 using Reservio.Repositories;
 using Reservio.Services;
@@ -16,6 +17,7 @@ builder.Services.AddControllers();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IRoomService, RoomService>();
 builder.Services.AddTransient<IAuthService, AuthService>();
+builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -23,7 +25,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-
+builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailConfigurations"));
 
 
 builder.Services.AddAuthentication(options =>
