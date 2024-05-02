@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Reservio.Interfaces;
 using Reservio.Models;
 
@@ -12,9 +13,6 @@ namespace Reservio.Controllers
     public class AuthController : Controller
     {
         private readonly IAuthService _authService;
-        
-        
-
         public AuthController(IAuthService authService)
         {
             _authService = authService;
@@ -22,11 +20,10 @@ namespace Reservio.Controllers
         }
 
         [HttpPost("login")]
-        [ProducesResponseType(200, Type = typeof(User))]
+        [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(204)]
-        public IResult Login([FromBody] LoginUser loginUser)
+        public IResult Login([FromBody] AuthenticateRequest authenticateRequest)
         {
 
             if(!ModelState.IsValid)
@@ -34,10 +31,26 @@ namespace Reservio.Controllers
                 return Results.BadRequest(ModelState);
             }
 
-            return _authService.Login(loginUser);
+            return _authService.Login(authenticateRequest);
 
-          
         }
+
+
+        [HttpPost("register")]
+        [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(400)]
+        public IResult Register([FromBody] RegisterRequest registerRequest)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Results.BadRequest(ModelState);
+            }
+
+            return _authService.Register(registerRequest);
+        }
+
+
+
 
     }
 }

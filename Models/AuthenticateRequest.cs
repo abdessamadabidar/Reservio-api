@@ -2,7 +2,7 @@
 
 namespace Reservio.Models
 {
-    public class LoginUser
+    public class AuthenticateRequest
     {
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;

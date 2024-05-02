@@ -16,10 +16,10 @@ namespace Reservio.Services
             _mapper = mapper;
         }
 
-        public bool CreateUser(UserDto user)
+        public bool RegisterUser(RegisterRequest registerRequest)
         {
-            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-            var userMap = _mapper.Map<User>(user);
+            registerRequest.Password = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password);
+            var userMap = _mapper.Map<User>(registerRequest);
 
             return _userRepository.CreateUser(userMap);
         }

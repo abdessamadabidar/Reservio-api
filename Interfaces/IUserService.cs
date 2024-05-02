@@ -9,7 +9,7 @@ namespace Reservio.Interfaces
         UserDto GetUserById(Guid id);
         IEnumerable<UserDto> GetUsersByRole(string roleName);
         bool UserExists(Guid id);
-        bool CreateUser(UserDto user);
+        bool RegisterUser(RegisterRequest registerRequest);
         bool UpdateUser(UserDto user);
         bool DeleteUser(Guid userId);
         IEnumerable<string> GetUserRoles(User user);

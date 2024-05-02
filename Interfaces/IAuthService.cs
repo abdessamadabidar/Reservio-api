@@ -5,7 +5,7 @@ namespace Reservio.Interfaces
 {
     public interface IAuthService
     {
-        public IResult Login(LoginUser loginUser);
-        public User GetUserByEmail(string email);
+        public IResult Login(AuthenticateRequest authenticateRequest);
+        public IResult Register(RegisterRequest registerUser);
     }
 }

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Reservio.Interfaces;
 using Reservio.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+
 
 
 namespace Reservio.Services
@@ -21,20 +23,15 @@ namespace Reservio.Services
             
         }
 
-        public User GetUserByEmail(string email)
+        public IResult Login(AuthenticateRequest authenticateRequest)
         {
-            throw new NotImplementedException();
-        }
-
-        public IResult Login(LoginUser loginUser)
-        {
-            var user = _userService.GetUserByEmail(loginUser.Email);
+            var user = _userService.GetUserByEmail(authenticateRequest.Email);
             if (user is null)
                 return Results.NotFound("User not found!");
 
 
 
-            var matches = user != null && BCrypt.Net.BCrypt.Verify(loginUser.Password, user.Password);
+            var matches = user != null && BCrypt.Net.BCrypt.Verify(authenticateRequest.Password, user.Password);
 
             if (!matches)
             {
@@ -72,6 +69,30 @@ namespace Reservio.Services
             return Results.Ok(tokenString);
         }
 
-       
+        public IResult Register(RegisterRequest registerRequest)
+        {
+            if (registerRequest == null)
+            {
+                 return Results.BadRequest("Invalid request");
+            }
+
+            var user = _userService.GetUserByEmail(registerRequest.Email);
+            if (user != null)
+            {
+                Results.BadRequest(user.Email + " already exists");
+            }
+
+
+
+            if(!_userService.RegisterUser(registerRequest))
+                return Results.Json($"Something went wrong updating the user {registerRequest.Email}");
+
+
+            // send email to user
+
+            return Results.Ok("User regisered successfully!");
+        }
+
+
     }
 }

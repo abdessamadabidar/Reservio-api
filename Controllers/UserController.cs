@@ -65,42 +65,7 @@ namespace Reservio.Controllers
             return Ok(users);
         }
 
-        [HttpPost]
-        [ProducesResponseType(204)]
-        [ProducesResponseType(400)]
-        public IActionResult CreateUser([FromBody] UserDto newUserDto)
-        {
-            if (newUserDto == null)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var user = _userService
-                .GetAllUsers()
-                .Where(user => user.Email == newUserDto.Email)
-                .FirstOrDefault();
-
-            if (user != null)
-            {
-                ModelState.AddModelError("", "Email already exists");
-                // 422 The server cannot process the request because it contains invalid properties.
-                return StatusCode(422, ModelState);
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-
-            if (!_userService.CreateUser(newUserDto))
-            {
-                ModelState.AddModelError("", $"Something went wrong saving the user {newUserDto.Email}");
-                return StatusCode(500, ModelState);
-            }
-
-            return Ok("User created successfully");
-        }
+        
 
         [HttpPut("{UserId:guid}")]
         [ProducesResponseType(204)]
