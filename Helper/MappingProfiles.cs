@@ -16,6 +16,12 @@ namespace Reservio.Helper
             CreateMap<RegisterRequest, User>();
             CreateMap<User, RegisterResponse>();
             CreateMap<RegisterResponse, User>();
+
+            CreateMap<Notification, NotificationRequestDto>();
+            CreateMap<NotificationRequestDto, Notification>();
+
+            CreateMap<Notification, NotificationResponseDto>();
+            CreateMap<NotificationResponseDto, Notification>();
         }
     }
 }

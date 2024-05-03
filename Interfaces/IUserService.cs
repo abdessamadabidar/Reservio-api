@@ -13,9 +13,10 @@ namespace Reservio.Interfaces
         RegisterResponse RegisterUser(RegisterRequest registerRequest);
         bool UpdateUser(UserDto user);
         bool DeleteUser(Guid userId);
-        IEnumerable<string> GetUserRoles(User user);
+        IEnumerable<string> GetUserRoles(Guid userId);
         User GetUserByEmail(string email);
         bool UserVerified(Guid id);
-     
+        IEnumerable<NotificationResponseDto> GetAllNotifications(Guid userId);
+
     }
 }

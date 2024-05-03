@@ -89,6 +89,15 @@ namespace Reservio.Data
             }
 
 
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.Entity is Notification && entry.State == EntityState.Added)
+                {
+                    entry.CurrentValues["CreatedAt"] = DateTime.Now;
+                }
+            }
+
+
             var recentlyAddedUsers = ChangeTracker
                 .Entries<User>()
                 .Where(e => e.State == EntityState.Added)

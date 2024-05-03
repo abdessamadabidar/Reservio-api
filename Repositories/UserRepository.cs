@@ -41,11 +41,19 @@ namespace Reservio.Repositories
             return _context.Users.Find(id);
         }
 
-        public IEnumerable<string> GetUserRoles(User user)
+        public IEnumerable<Notification> GetUserNotifications(Guid userId)
+        {
+            return _context.Notifications
+                .Where(notif => notif.UserId == userId)
+                .OrderByDescending(notif => notif.CreatedAt)
+                .ToList();
+        }
+
+        public IEnumerable<string> GetUserRoles(Guid userId)
         {
             return from role in _context.Roles
                    join userRole in _context.RoleUsers on role.Id equals userRole.RoleId
-                   where userRole.UserId == user.Id
+                   where userRole.UserId == userId
                    select role.Name;
         }
 

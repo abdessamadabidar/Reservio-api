@@ -59,9 +59,9 @@ namespace Reservio.Services
             return _mapper.Map<UserDto>(_userRepository.GetUserById(id));
         }
 
-        public IEnumerable<string> GetUserRoles(User user)
+        public IEnumerable<string> GetUserRoles(Guid userId)
         {
-            return _userRepository.GetUserRoles(user);
+            return _userRepository.GetUserRoles(userId);
         }
 
         public IEnumerable<UserDto> GetUsersByRole(string roleName)
@@ -103,6 +103,12 @@ namespace Reservio.Services
                 return false;
 
             return user.VerifiedAt != null;
+        }
+
+        public IEnumerable<NotificationResponseDto> GetAllNotifications(Guid userId)
+        {
+            var notifications = _mapper.Map<List<NotificationResponseDto>>(_userRepository.GetUserNotifications(userId));
+            return notifications;
         }
     }
 }

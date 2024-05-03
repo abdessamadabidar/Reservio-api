@@ -76,7 +76,7 @@ namespace Reservio.Services
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.FirstName + " " + user.LastName),
             };
-            foreach (var role in _userService.GetUserRoles(user))
+            foreach (var role in _userService.GetUserRoles(user.Id))
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }

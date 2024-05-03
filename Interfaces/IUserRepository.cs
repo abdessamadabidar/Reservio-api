@@ -13,7 +13,8 @@ namespace Reservio.Interfaces
         bool UpdateUser(User user);
         bool DeleteUser(User user);
         User GetUserByEmail(string email);
-        IEnumerable<string> GetUserRoles(User user);
+        IEnumerable<string> GetUserRoles(Guid UserId);
+        IEnumerable<Notification> GetUserNotifications(Guid UserId);
         bool Save();
     }
 }

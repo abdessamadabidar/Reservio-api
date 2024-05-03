@@ -21,7 +21,7 @@ namespace Reservio.Controllers
 
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(ICollection<UserDto>))]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "USER")]
+        // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "USER")]
         public IActionResult GetAllUsers()
         {
             var users = _userService.GetAllUsers();
@@ -124,6 +124,46 @@ namespace Reservio.Controllers
 
             return Ok("User deleted successfully");
         }
-       
+
+        [HttpGet("{userId:guid}/notifications")]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<NotificationResponseDto>))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetUserNotifications(Guid userId)
+        {
+            if (!_userService.UserExists(userId))
+            {
+                return NotFound("user not found");
+            }
+
+            var notifications = _userService.GetAllNotifications(userId);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            return Ok(notifications);
+        }
+
+
+        [HttpGet("{userId:guid}/roles")]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<NotificationResponseDto>))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetUserRoles(Guid userId)
+        {
+            if (!_userService.UserExists(userId))
+            {
+                return NotFound("user not found");
+            }
+
+            var roles = _userService.GetUserRoles(userId);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            return Ok(roles);
+        }
     }
 }
