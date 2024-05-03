@@ -57,7 +57,14 @@ namespace Reservio.Services
                     Body = template
                 };
 
-                _emailService.SendEmail(EmailToSend);
+                try
+                {
+                    _emailService.SendEmail(EmailToSend);
+                }
+                catch
+                {
+                    throw new Exception("Failed to send email");
+                }
                 return Results.Json("User not verified! We've sent an email to verify your account");
             }
 
@@ -102,11 +109,12 @@ namespace Reservio.Services
             }
 
             var user = _userService.GetUserByEmail(registerRequest.Email);
-            if (user != null)
+
+            // check whether user exists and is not deleted
+            if (user != null && user.DeletedAt == null)
             {
                 Results.BadRequest(user.Email + " already exists");
             }
-
 
 
             var registeredUser = _userService.RegisterUser(registerRequest);

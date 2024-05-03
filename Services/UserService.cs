@@ -20,6 +20,20 @@ namespace Reservio.Services
         {
             registerRequest.Password = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password);
             var userMap = _mapper.Map<User>(registerRequest);
+
+            var user = _userRepository.GetUserByEmail(registerRequest.Email);
+            // if user exists and is deleted, restore it
+            if (user != null && user.DeletedAt != null)
+            {
+                user.DeletedAt = null;
+                user.UpdatedAt = null;
+                user.CreatedAt = DateTime.Now;
+                user.VerifiedAt = null;
+
+                if (!_userRepository.UpdateUser(user))
+                    return null;
+            }
+
             if (userMap == null || !_userRepository.CreateUser(userMap))
                 return null;
 
