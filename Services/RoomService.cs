@@ -17,7 +17,7 @@ namespace Reservio.Services
             _mapper = mapper;
         }
 
-        public bool CreateRoom(RoomDto room)
+        public bool CreateRoom(RoomResponseDto room)
         {
             var roomMap = _mapper.Map<Room>(room); 
             return _roomRepository.CreateRoom(roomMap);
@@ -33,32 +33,20 @@ namespace Reservio.Services
             return _roomRepository.DeleteRoom(roomToDelete);
         }
 
-        public ICollection<RoomDto> GetAllRooms()
+        public ICollection<RoomResponseDto> GetAllRooms()
         {
-            return _mapper.Map<List<RoomDto>>(_roomRepository.GetAllRooms());
+            return _mapper.Map<List<RoomResponseDto>>(_roomRepository.GetAllRooms());
         }
-
-        public ICollection<RoomDto> GetReservedRooms()
+        public Room GetRoomById(Guid roomId)
         {
-            return _mapper.Map<List<RoomDto>>(_roomRepository.GetReservedRooms());
+            return _roomRepository.GetRoomById(roomId);
         }
-
-        public RoomDto GetRoomById(Guid roomId)
-        {
-            return _mapper.Map<RoomDto>(_roomRepository.GetRoomById(roomId));
-        }
-
-        public ICollection<RoomDto> GetUnReservedRooms()
-        {
-            return _mapper.Map<List<RoomDto>>(_roomRepository.GetUnReservedRooms());
-        }
-
         public bool RoomExists(Guid id)
         {
             return _roomRepository.RoomExists(id);
         }
 
-        public bool UpadateRoom(RoomDto roomDto)
+        public bool UpadateRoom(RoomResponseDto roomDto)
         {
             var roomMap = _mapper.Map<Room>(roomDto);
             return _roomRepository.UpdateRoom(roomMap);

@@ -54,9 +54,9 @@ namespace Reservio.Services
             return _userRepository.GetUserByEmail(email);
         }
 
-        public UserDto GetUserById(Guid id)
+        public User GetUserById(Guid id)
         {
-            return _mapper.Map<UserDto>(_userRepository.GetUserById(id));
+            return _userRepository.GetUserById(id);
         }
 
         public IEnumerable<string> GetUserRoles(Guid userId)
@@ -64,12 +64,12 @@ namespace Reservio.Services
             return _userRepository.GetUserRoles(userId);
         }
 
-        public IEnumerable<UserDto> GetUsersByRole(string roleName)
+        public IEnumerable<UserResponseDto> GetUsersByRole(string roleName)
         {
-            return _mapper.Map<IEnumerable<UserDto>>(_userRepository.GetUsersByRole(roleName));
+            return _mapper.Map<IEnumerable<UserResponseDto>>(_userRepository.GetUsersByRole(roleName));
         }
 
-        public bool UpdateUser(UserDto user)
+        public bool UpdateUser(UserResponseDto user)
         {
             var userMap = _mapper.Map<User>(user);
             return _userRepository.UpdateUser(userMap);
@@ -80,9 +80,9 @@ namespace Reservio.Services
             return _userRepository.UserExists(id);
         }
 
-        ICollection<UserDto> IUserService.GetAllUsers()
+        ICollection<UserResponseDto> IUserService.GetAllUsers()
         {
-            return _mapper.Map<ICollection<UserDto>>(_userRepository.GetAllUsers());
+            return _mapper.Map<ICollection<UserResponseDto>>(_userRepository.GetAllUsers());
         }
 
         public bool VerifyUser(Guid id)
@@ -109,6 +109,11 @@ namespace Reservio.Services
         {
             var notifications = _mapper.Map<List<NotificationResponseDto>>(_userRepository.GetUserNotifications(userId));
             return notifications;
+        }
+
+        public bool UpdateUser(User user)
+        {
+            return _userRepository.UpdateUser(user);
         }
     }
 }

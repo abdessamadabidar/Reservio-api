@@ -35,11 +35,6 @@ namespace Reservio.Data
                 .HasForeignKey(ru => ru.RoleId);
 
 
-            modelBuilder.Entity<Room>().Property(r => r.isReserved).HasDefaultValue(false);
-            
-            modelBuilder.Entity<Reservation>()
-                .HasKey(r => new { r.UserId, r.RoomId, r.StartDateTime });
-
             modelBuilder.Entity<Reservation>()
                 .HasOne(r => r.User)
                 .WithMany(u => u.Reservations)
@@ -48,7 +43,12 @@ namespace Reservio.Data
             modelBuilder.Entity<Reservation>()
                 .HasOne(r => r.Room)
                 .WithMany(r => r.Reservations)
-                .HasForeignKey(r => r.RoomId);
+                .HasForeignKey(r => r.RoomId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+           
+
 
 
             modelBuilder.Entity<User>()
@@ -56,11 +56,19 @@ namespace Reservio.Data
                 .IsUnique();
 
             modelBuilder.Entity<Room>()
-                .HasIndex(r => r.Code)
+                .HasIndex(r => r.Name)
                 .IsUnique();
 
             modelBuilder.Entity<User>()
                 .Property(User => User.CreatedAt)
+                .HasDefaultValueSql("GETDATE()");
+
+            modelBuilder.Entity<Notification>()
+                .Property(Notification => Notification.CreatedAt)
+                .HasDefaultValueSql("GETDATE()");
+
+            modelBuilder.Entity<Reservation>()
+                .Property(Reservation => Reservation.CreatedAt)
                 .HasDefaultValueSql("GETDATE()");
 
             modelBuilder.Entity<User>()
@@ -89,13 +97,7 @@ namespace Reservio.Data
             }
 
 
-            foreach (var entry in ChangeTracker.Entries())
-            {
-                if (entry.Entity is Notification && entry.State == EntityState.Added)
-                {
-                    entry.CurrentValues["CreatedAt"] = DateTime.Now;
-                }
-            }
+          
 
 
             var recentlyAddedUsers = ChangeTracker

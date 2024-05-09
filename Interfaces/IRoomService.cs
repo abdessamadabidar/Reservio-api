@@ -5,13 +5,11 @@ namespace Reservio.Interfaces
 {
     public interface IRoomService
     {
-        ICollection<RoomDto> GetAllRooms();
-        ICollection<RoomDto> GetReservedRooms();
-        ICollection<RoomDto> GetUnReservedRooms();
+        ICollection<RoomResponseDto> GetAllRooms();
         bool RoomExists(Guid id);
-        RoomDto GetRoomById(Guid roomId);
-        bool CreateRoom(RoomDto roomDto);
-        bool UpadateRoom(RoomDto roomDto);
+        Room GetRoomById(Guid roomId);
+        bool CreateRoom(RoomResponseDto roomDto);
+        bool UpadateRoom(RoomResponseDto roomDto);
         bool DeleteRoom(Guid roomId);
 
     }

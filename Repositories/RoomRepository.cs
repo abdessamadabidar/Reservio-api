@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Reservio.Data;
 using Reservio.Interfaces;
 using Reservio.Models;
@@ -28,19 +29,10 @@ namespace Reservio.Repositories {
             return _context.Rooms.OrderBy(r => r.Id).ToList();    
         }
 
-        public ICollection<Room> GetReservedRooms()
-        {
-            return _context.Rooms.Where(r => r.isReserved == true).ToList();
-        }
 
         public Room GetRoomById(Guid roomId)
         {
-            return _context.Rooms.Where(r => r.Id == roomId).FirstOrDefault();
-        }
-
-        public ICollection<Room> GetUnReservedRooms()
-        {
-            return _context.Rooms.Where(r => r.isReserved == false).ToList();
+            return _context.Rooms.Include(room => room.Reservations).Where(r => r.Id == roomId).FirstOrDefault();
         }
 
         public bool RoomExists(Guid id)

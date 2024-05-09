@@ -1,10 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Reservio.Dto {
-    public class RoomDto {
-        public Guid Id { get; set; }
-        public string Code { get; set; } = null!;
-        public bool isReserved { get; set; }
+﻿
+namespace Reservio.Dto
+{
+    public class RoomDto
+    {
+        public string Name { get; set; } = null!;
+        public int Capacity { get; set; }
+        public string ImageUrl { get; set; } = null!;
 
     }
 }

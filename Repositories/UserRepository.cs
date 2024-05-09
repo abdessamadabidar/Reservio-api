@@ -38,7 +38,7 @@ namespace Reservio.Repositories
 
         public User GetUserById(Guid id)
         {
-            return _context.Users.Find(id);
+            return _context.Users.Include(user => user.Reservations).Where(u => u.Id == id).FirstOrDefault();
         }
 
         public IEnumerable<Notification> GetUserNotifications(Guid userId)

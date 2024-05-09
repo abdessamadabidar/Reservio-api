@@ -16,13 +16,12 @@ namespace Reservio.Email
         }
 
 
-        public string PrepareEmailTemplate(Guid Id, string FirstName, string LastName)
+        public string PrepareEmailTemplate(string FirstName, string LastName, string url)
         {
             var template = File.ReadAllText("template/verification.html");
             template = template.Replace("{{firstname}}", FirstName);
             template = template.Replace("{{lastname}}", LastName);
-            template = template.Replace("{{verify_link}}", "https://localhost:7154/api/Auth/Verify/" + Id); // Handle this as post request in the controller
-
+            template = template.Replace("{{verify_link}}", url); 
             return template;
         }
 

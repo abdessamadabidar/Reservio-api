@@ -22,7 +22,7 @@ namespace Reservio.Controllers
 
 
         [HttpGet("all")]
-        [ProducesResponseType(200, Type = typeof(ICollection<RoomDto>))]
+        [ProducesResponseType(200, Type = typeof(ICollection<RoomResponseDto>))]
         public IActionResult GetAllRooms()
         {
             var rooms = _roomService.GetAllRooms();
@@ -34,36 +34,9 @@ namespace Reservio.Controllers
             return Ok(rooms);
         }
 
-        [HttpGet("reserved")]
-        [ProducesResponseType(200, Type = typeof(ICollection<RoomDto>))]
-        public IActionResult GetReservedRooms()
-        {
-            var rooms = _roomService.GetReservedRooms();
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            return Ok(rooms);
-        }
-
-
-        [HttpGet("unreserved")]
-        [ProducesResponseType(200, Type = typeof(ICollection<RoomDto>))]
-        public IActionResult GetUnReservedRooms()
-        {
-            var rooms = _roomService.GetUnReservedRooms();
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            return Ok(rooms);
-        }
-
 
         [HttpGet("{roomId:guid}")]
-        [ProducesResponseType(200, Type = typeof(RoomDto))]
+        [ProducesResponseType(200, Type = typeof(RoomResponseDto))]
         public IActionResult GetRoomById(Guid roomId)
         {
             var room = _roomService.GetRoomById(roomId);
@@ -79,13 +52,13 @@ namespace Reservio.Controllers
         [HttpPost]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public IActionResult CreateRoom( [FromBody] RoomDto roomDto )
+        public IActionResult CreateRoom( [FromBody] RoomResponseDto roomDto )
         {
             if (roomDto == null)
                 return BadRequest(ModelState);
 
             var rooms = _roomService.GetAllRooms()
-                .Where(r => r.Code == roomDto.Code)
+                .Where(r => r.Name == roomDto.Name)
                 .FirstOrDefault();
 
             if (rooms != null)
@@ -111,7 +84,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult UpdateRoom(Guid RoomId, [FromBody] RoomDto UpdatedRoomDto)
+        public IActionResult UpdateRoom(Guid RoomId, [FromBody] RoomResponseDto UpdatedRoomDto)
         {
             if (UpdatedRoomDto == null || RoomId != UpdatedRoomDto.Id)
             {
@@ -132,7 +105,7 @@ namespace Reservio.Controllers
 
             if (!_roomService.UpadateRoom(UpdatedRoomDto))
             {
-                ModelState.AddModelError("", $"Something went wrong updating the room {UpdatedRoomDto.Code}");
+                ModelState.AddModelError("", $"Something went wrong updating the room {UpdatedRoomDto.Name}");
                 return StatusCode(500, ModelState);
             }
 

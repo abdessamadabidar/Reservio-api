@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Reservio.Data;
 
@@ -11,9 +12,11 @@ using Reservio.Data;
 namespace Reservio.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240504142426_RefactorRelationships")]
+    partial class RefactorRelationships
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,8 +65,7 @@ namespace Reservio.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
@@ -72,14 +74,8 @@ namespace Reservio.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EndDateTime")
-                        .HasColumnType("datetime2");
-
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("StartDateTime")
-                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -94,6 +90,21 @@ namespace Reservio.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Reservations");
+                });
+
+            modelBuilder.Entity("Reservio.Models.ReservationSchedule", b =>
+                {
+                    b.Property<Guid>("ReservationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ReservationId", "ScheduleId");
+
+                    b.HasIndex("ScheduleId");
+
+                    b.ToTable("ReservationSchedule");
                 });
 
             modelBuilder.Entity("Reservio.Models.Role", b =>
@@ -132,8 +143,9 @@ namespace Reservio.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Capacity")
-                        .HasColumnType("int");
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAddOrUpdate()
@@ -142,25 +154,37 @@ namespace Reservio.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("Code")
                         .IsUnique();
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("Reservio.Models.Schedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EndDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("StartDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("Schedules");
                 });
 
             modelBuilder.Entity("Reservio.Models.User", b =>
@@ -171,8 +195,7 @@ namespace Reservio.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
@@ -243,6 +266,25 @@ namespace Reservio.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Reservio.Models.ReservationSchedule", b =>
+                {
+                    b.HasOne("Reservio.Models.Reservation", "Reservation")
+                        .WithMany("ReservationSchedules")
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Reservio.Models.Schedule", "Schedule")
+                        .WithMany("ReservationSchedules")
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Reservation");
+
+                    b.Navigation("Schedule");
+                });
+
             modelBuilder.Entity("Reservio.Models.RoleUser", b =>
                 {
                     b.HasOne("Reservio.Models.Role", "Role")
@@ -262,6 +304,22 @@ namespace Reservio.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Reservio.Models.Schedule", b =>
+                {
+                    b.HasOne("Reservio.Models.Room", "Room")
+                        .WithMany("Schedules")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("Reservio.Models.Reservation", b =>
+                {
+                    b.Navigation("ReservationSchedules");
+                });
+
             modelBuilder.Entity("Reservio.Models.Role", b =>
                 {
                     b.Navigation("UserRoles");
@@ -270,6 +328,13 @@ namespace Reservio.Migrations
             modelBuilder.Entity("Reservio.Models.Room", b =>
                 {
                     b.Navigation("Reservations");
+
+                    b.Navigation("Schedules");
+                });
+
+            modelBuilder.Entity("Reservio.Models.Schedule", b =>
+                {
+                    b.Navigation("ReservationSchedules");
                 });
 
             modelBuilder.Entity("Reservio.Models.User", b =>

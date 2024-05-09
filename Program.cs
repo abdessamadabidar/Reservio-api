@@ -1,33 +1,68 @@
+using Hangfire;
+using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Reservio.Data;
 using Reservio.Email;
+using Reservio.Hangfire;
+using Reservio.Helper;
 using Reservio.Interfaces;
 using Reservio.Repositories;
 using Reservio.Services;
+using System.Configuration;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(x =>
+                x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles); ;
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IRoomService, RoomService>();
 builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
+builder.Services.AddTransient<IReservationService, ReservationService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IRecurringJob, Reservio.Hangfire.RecurringJob>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailConfigurations"));
+
+
+
+builder.Services.AddHangfire(hangfire =>
+{
+    hangfire.SetDataCompatibilityLevel(CompatibilityLevel.Version_170);
+    hangfire.UseSimpleAssemblyNameTypeSerializer();
+    hangfire.UseRecommendedSerializerSettings();
+    hangfire.UseColouredConsoleLogProvider();
+    hangfire.UseSqlServerStorage(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        new SqlServerStorageOptions
+        {
+            CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+            SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+            QueuePollInterval = TimeSpan.Zero,
+            UseRecommendedIsolationLevel = true,
+            DisableGlobalLocks = true
+        });
+
+  
+});
+
 
 
 builder.Services.AddAuthentication(options =>
@@ -83,6 +118,14 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+
+app.UseHangfireDashboard();
+app.UseHangfireServer();
+
+Hangfire.RecurringJob.AddOrUpdate<IRecurringJob>(
+   job => job.CleanupExpiredReservations(), Cron.Hourly());
+
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -91,6 +134,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseHangfireDashboard();
 
 app.UseAuthorization();
 app.UseAuthentication();

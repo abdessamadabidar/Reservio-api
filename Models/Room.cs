@@ -9,14 +9,10 @@ namespace Reservio.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
         [Required]
-        public string Code { get; set; } = null!;
-
-        public bool isReserved = false;
-
-        public Room(string code)
-        {
-            Code = code;
-        }
+        public string Name { get; set; } = null!;
+        public int Capacity { get; set; }
+        public string? Description { get; set; }
+        public string? ImageUrl { get; set; }
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
     }
 }

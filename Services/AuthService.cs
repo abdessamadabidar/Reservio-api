@@ -1,5 +1,7 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.IdentityModel.Tokens;
 using Reservio.Email;
+using Reservio.Helper;
 using Reservio.Interfaces;
 using Reservio.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -49,7 +51,9 @@ namespace Reservio.Services
             if (user?.VerifiedAt == null)
             {
                 // generate template
-                var template = _emailService.PrepareEmailTemplate(user.Id, user.FirstName, user.LastName);
+
+                var url = $"https://localhost:7154/api/Auth/Verify/{user?.Id}";
+                var template = _emailService.PrepareEmailTemplate(user?.FirstName, user?.LastName, url);
                 var EmailToSend = new Mail
                 {
                     To = user.Email,
@@ -70,33 +74,7 @@ namespace Reservio.Services
 
 
             // user authenticated successfully so generate jwt token
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.FirstName + " " + user.LastName),
-            };
-            foreach (var role in _userService.GetUserRoles(user.Id))
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
-
-            var token = new JwtSecurityToken
-        (
-            issuer: _configuration["JWT:ValidIssuer"],
-            audience: _configuration["JWT:ValidAudience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddDays(60),
-            notBefore: DateTime.UtcNow,
-            signingCredentials: new SigningCredentials(
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"])),
-                SecurityAlgorithms.HmacSha256)
-        );
-
-
-
-            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+            var tokenString = GenerateJwtToken(user);
 
             return Results.Ok(tokenString);
         }
@@ -124,8 +102,8 @@ namespace Reservio.Services
 
 
             // Prepare body of email
-
-           var template = _emailService.PrepareEmailTemplate(registeredUser.Id, registeredUser.FirstName, registeredUser.LastName);
+            var url = $"https://localhost:7154/api/Auth/Verify/{user?.Id}";
+            var template = _emailService.PrepareEmailTemplate(registeredUser.FirstName, registeredUser.LastName, url);
 
            
             // send email to user
@@ -156,6 +134,103 @@ namespace Reservio.Services
         public bool UserVerified(Guid Id)
         {
             return _userService.UserVerified(Id);
+        }
+
+        public string GenerateJwtToken(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.FirstName + " " + user.LastName),
+            };
+            foreach (var role in _userService.GetUserRoles(user.Id))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+
+            var token = new JwtSecurityToken
+        (
+            issuer: _configuration["JWT:ValidIssuer"],
+            audience: _configuration["JWT:ValidAudience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddDays(1),
+            notBefore: DateTime.UtcNow,
+            signingCredentials: new SigningCredentials(
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"])),
+                SecurityAlgorithms.HmacSha256)
+        );
+
+
+           return new JwtSecurityTokenHandler().WriteToken(token);
+
+        }
+
+        public AuthServiceResult ForgotPassword(string email)
+        {
+            var user = _userService.GetUserByEmail(email);
+            if (user == null)
+            {
+                return AuthServiceResult.UserNotFound;
+            }
+            try
+            {
+
+                // generate token and encode it
+                var token = GenerateJwtToken(user);
+                var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                var url = $"https://localhost:7154/api/Auth/reset-password?token={encodedToken}";
+
+                // send email to user to reset password
+                var template = _emailService.PrepareEmailTemplate(user.FirstName, user.LastName, url);
+                var EmailToSend = new Mail
+                {
+                    To = user.Email,
+                    Subject = "Password Reset",
+                    Body = template
+                };
+
+            
+                _emailService.SendEmail(EmailToSend);
+                return AuthServiceResult.Success;
+            }
+            catch
+            {
+                return AuthServiceResult.EmailSendFailure;
+            }
+        }
+
+        public Guid? ValidateToken(string token)
+        {
+            if (token == null)
+                return null;
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]);
+            try
+            {
+                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                var jwtToken = (JwtSecurityToken)validatedToken;
+                var userId = Guid.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
+
+                // return user id from JWT token if validation successful
+                return userId;
+            }
+            catch
+            {
+                // return null if validation fails
+                return null;
+            }
         }
     }
 }

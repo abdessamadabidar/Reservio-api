@@ -20,7 +20,7 @@ namespace Reservio.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(200, Type = typeof(ICollection<UserDto>))]
+        [ProducesResponseType(200, Type = typeof(ICollection<UserResponseDto>))]
         // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "USER")]
         public IActionResult GetAllUsers()
         {
@@ -34,7 +34,7 @@ namespace Reservio.Controllers
         }
 
         [HttpGet("{UserId:guid}")]
-        [ProducesResponseType(200, Type = typeof(UserDto))]
+        [ProducesResponseType(200, Type = typeof(UserResponseDto))]
         [ProducesResponseType(400)]
         public IActionResult GetUserById(Guid UserId)
         {
@@ -51,7 +51,7 @@ namespace Reservio.Controllers
         }
 
         [HttpGet("role/{Role:alpha}")]
-        [ProducesResponseType(200, Type = typeof(IEnumerable<UserDto>))]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<UserResponseDto>))]
         [ProducesResponseType(400)]
         public IActionResult GetUserByRole(string Role)
         {
@@ -71,7 +71,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult UpdateUser(Guid UserId, [FromBody] UserDto updatedUserDto)
+        public IActionResult UpdateUser(Guid UserId, [FromBody] UserResponseDto updatedUserDto)
         {
             if (updatedUserDto == null || UserId != updatedUserDto.Id)
             {
@@ -165,5 +165,8 @@ namespace Reservio.Controllers
 
             return Ok(roles);
         }
+
+
+      
     }
 }

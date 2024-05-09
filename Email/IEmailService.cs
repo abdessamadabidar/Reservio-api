@@ -5,7 +5,7 @@ namespace Reservio.Email
     public interface IEmailService
     {
         void SendEmail(Mail mail);
-        string PrepareEmailTemplate(Guid Id, string FirstName, string LastName);
+        string PrepareEmailTemplate(string FirstName, string LastName, string url);
 
     }
 }
