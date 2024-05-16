@@ -1,8 +1,7 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reservio.Dto;
+using Reservio.Helper;
 using Reservio.Interfaces;
 
 
@@ -71,16 +70,17 @@ namespace Reservio.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult UpdateUser(Guid UserId, [FromBody] UserResponseDto updatedUserDto)
+        public IActionResult UpdateUser(Guid UserId, [FromBody] UpdateUserDto updatedUserDto)
         {
-            if (updatedUserDto == null || UserId != updatedUserDto.Id)
+            if (updatedUserDto == null)
             {
-                return BadRequest(ModelState);
+                return BadRequest("user id is null");
             }
+
 
             if (!_userService.UserExists(UserId))
             {
-                return NotFound();
+                return NotFound("User not found");
             }
 
             if (!ModelState.IsValid)
@@ -145,6 +145,32 @@ namespace Reservio.Controllers
             return Ok(notifications);
         }
 
+        [HttpGet("{userId:guid}/reservations")]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ReservationResponseDto>))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult GetUserReservations(Guid userId)
+        {
+            if (!_userService.UserExists(userId))
+            {
+                return NotFound("user not found");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+             
+           var reservations = _userService.GetAllReservations(userId);
+
+
+            return Ok(reservations);
+
+        }
+
+
+
 
         [HttpGet("{userId:guid}/roles")]
         [ProducesResponseType(200, Type = typeof(IEnumerable<NotificationResponseDto>))]
@@ -167,6 +193,101 @@ namespace Reservio.Controllers
         }
 
 
-      
+        [HttpPut("{userId:guid}/change-password")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult ChangePassword(Guid userId, [FromBody] ChangePasswordRequestDto changePasswordRequest)
+        {
+
+            if (!ModelState.IsValid || changePasswordRequest == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+
+            var result = _userService.ChangePassword(userId, changePasswordRequest);
+
+            if (result == Result.UserNotFound)
+            {
+                return NotFound("user not found");
+            }
+
+            if (result == Result.PasswordNotMatch)
+            {
+                ModelState.AddModelError("", "Password does not match");
+                return BadRequest(ModelState);
+            }
+
+            if (result == Result.ChangePasswordFailure)
+            {
+                ModelState.AddModelError("", "Something went wrong changing the password");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Password changed successfully");
+        }
+
+
+        [HttpPut("{userId:guid}/enable")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult EnableUser(Guid userId)
+        {
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!_userService.UserExists(userId))
+            {
+                return NotFound("user not found");
+            }
+
+
+            if (!_userService.EnableUser(userId))
+            {
+                ModelState.AddModelError("user", "Something went wrong enabling the user");
+                return StatusCode(500, ModelState);
+
+            }
+
+
+            return Ok("User enabled successfully");
+
+        }
+
+
+        [HttpPut("{userId:guid}/disable")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult DisableUser(Guid userId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!_userService.UserExists(userId))
+            {
+                return NotFound("user not found");
+            }
+
+
+            if (!_userService.DisableUser(userId))
+            {
+                ModelState.AddModelError("user", "Something went wrong disabling the user");
+                return StatusCode(500, ModelState);
+
+            }
+
+
+            return Ok("User disabled successfully");
+
+        }
+
+
     }
 }

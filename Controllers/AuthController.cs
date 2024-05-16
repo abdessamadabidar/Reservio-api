@@ -10,6 +10,7 @@ using Reservio.Services;
 using Reservio.Helper;
 using System.Runtime.CompilerServices;
 using AutoMapper;
+using Microsoft.AspNetCore.Cors;
 
 
 
@@ -34,18 +35,50 @@ namespace Reservio.Controllers
         }
 
         [HttpPost("login")]
-        [ProducesResponseType(200, Type = typeof(string))]
+        [EnableCors("AllowCros")]
+        [ProducesResponseType(200, Type = typeof(LoginResponseDto))]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IResult Login([FromBody] AuthenticateRequest authenticateRequest)
+        public IActionResult Login([FromBody] AuthenticateRequest authenticateRequest)
         {
+
+            if (authenticateRequest == null)
+            {
+                return BadRequest("Invalid request");
+            }
 
             if(!ModelState.IsValid)
             {
-                return Results.BadRequest(ModelState);
+                return BadRequest(ModelState);
             }
 
-            return _authService.Login(authenticateRequest);
+            var user = _userService.GetUserByEmail(authenticateRequest.Email);
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            var matches = BCrypt.Net.BCrypt.Verify(authenticateRequest.Password, user.Password);
+            if (!matches)
+            {
+                return BadRequest("Invalid credentials");
+            }
+
+
+
+
+            var loggedInUser = _authService.Login(authenticateRequest);
+
+            if (loggedInUser.statusCode == 401)
+            {
+                ModelState.AddModelError("Account", "Account not verified");
+                return StatusCode(401, ModelState);
+            }
+
+
+
+            return Ok(loggedInUser);
 
         }
 
@@ -62,6 +95,9 @@ namespace Reservio.Controllers
 
             return _authService.Register(registerRequest);
         }
+
+
+
 
         [HttpGet("verify/{Id:guid}")]
         [ProducesResponseType(200, Type = typeof(string))]
@@ -102,13 +138,13 @@ namespace Reservio.Controllers
 
             var result = _authService.ForgotPassword(forgotPasswordRequest.Email);
 
-            if (result == AuthServiceResult.UserNotFound)
+            if (result == Result.UserNotFound)
             {
                 return NotFound("User not found");
             }
 
            
-            if (result == AuthServiceResult.EmailSendFailure)
+            if (result == Result.EmailSendFailure)
             {
                 return BadRequest("Could not send email");
             }
@@ -123,6 +159,12 @@ namespace Reservio.Controllers
         [ProducesResponseType(400)]
         public IActionResult ResetPassword([FromBody] ResetPasswordRequestDto resetPasswordRequestDto)
         {
+
+            if (resetPasswordRequestDto.Token == null || resetPasswordRequestDto.Token == "")
+            {
+                return BadRequest("No token received");
+            }
+
             if (!ModelState.IsValid || resetPasswordRequestDto == null)
             {
                 return BadRequest("Invalid request");

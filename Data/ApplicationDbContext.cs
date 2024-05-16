@@ -17,6 +17,8 @@ namespace Reservio.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<RoleUser> RoleUsers { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Equipment> Equipments { get; set; }
+        public DbSet<RoomEquipment> RoomEquipments { get; set; }
          
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -35,6 +37,20 @@ namespace Reservio.Data
                 .HasForeignKey(ru => ru.RoleId);
 
 
+            modelBuilder.Entity<RoomEquipment>()
+           .HasKey(re => new { re.RoomId, re.EquipmentId });
+
+            modelBuilder.Entity<RoomEquipment>()
+                .HasOne(re => re.Room)
+                .WithMany(r => r.RoomEquipments)
+                .HasForeignKey(re => re.RoomId);
+
+            modelBuilder.Entity<RoomEquipment>()
+                .HasOne(re => re.Equipment)
+                .WithMany(e => e.RoomEquipments)
+                .HasForeignKey(re => re.EquipmentId);
+
+
             modelBuilder.Entity<Reservation>()
                 .HasOne(r => r.User)
                 .WithMany(u => u.Reservations)
@@ -44,7 +60,7 @@ namespace Reservio.Data
                 .HasOne(r => r.Room)
                 .WithMany(r => r.Reservations)
                 .HasForeignKey(r => r.RoomId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
 
            
@@ -71,8 +87,21 @@ namespace Reservio.Data
                 .Property(Reservation => Reservation.CreatedAt)
                 .HasDefaultValueSql("GETDATE()");
 
+            modelBuilder.Entity<Room>()
+                .Property(Room => Room.CreatedAt)
+                .HasDefaultValueSql("GETDATE()");
+
             modelBuilder.Entity<User>()
                 .HasQueryFilter(user => user.DeletedAt == null);
+
+            modelBuilder.Entity<Room>()
+                .HasQueryFilter(room => room.DeletedAt == null);
+
+            modelBuilder.Entity<Equipment>()
+                .HasIndex(e => e.Name)
+                .IsUnique();
+
+           
 
         }
 
@@ -114,6 +143,7 @@ namespace Reservio.Data
                 }
             }
 
+           
             return base.SaveChanges();
         }
 

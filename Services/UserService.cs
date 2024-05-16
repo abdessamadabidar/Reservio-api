@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Reservio.Dto;
+using Reservio.Helper;
 using Reservio.Interfaces;
 using Reservio.Models;
 
@@ -69,10 +70,17 @@ namespace Reservio.Services
             return _mapper.Map<IEnumerable<UserResponseDto>>(_userRepository.GetUsersByRole(roleName));
         }
 
-        public bool UpdateUser(UserResponseDto user)
+        public bool UpdateUser(UpdateUserDto updateUserDto)
         {
-            var userMap = _mapper.Map<User>(user);
-            return _userRepository.UpdateUser(userMap);
+
+            var user = _userRepository.GetUserById(updateUserDto.Id);
+            if (user == null)
+                return false;
+
+            _mapper.Map(updateUserDto, user);
+
+   
+            return _userRepository.UpdateUser(user);
         }
 
         public bool UserExists(Guid id)
@@ -107,6 +115,10 @@ namespace Reservio.Services
 
         public IEnumerable<NotificationResponseDto> GetAllNotifications(Guid userId)
         {
+            var user = _userRepository.GetUserById(userId);
+            if (user == null)
+                return null;
+
             var notifications = _mapper.Map<List<NotificationResponseDto>>(_userRepository.GetUserNotifications(userId));
             return notifications;
         }
@@ -114,6 +126,55 @@ namespace Reservio.Services
         public bool UpdateUser(User user)
         {
             return _userRepository.UpdateUser(user);
+        }
+
+        public Result ChangePassword(Guid userId, ChangePasswordRequestDto changePasswordRequestDto)
+        {
+            var user = _userRepository.GetUserById(userId);
+            if (user == null)
+                return Result.UserNotFound;
+
+            if (!BCrypt.Net.BCrypt.Verify(changePasswordRequestDto.OldPassword, user.Password))
+                return Result.PasswordNotMatch;
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(changePasswordRequestDto.NewPassword);
+
+
+            return _userRepository.UpdateUser(user) ? Result.Success : Result.ChangePasswordFailure;
+        }
+
+        public bool EnableUser(Guid userId)
+        {
+            var user = _userRepository.GetUserById(userId);
+            if (user == null)
+                return false;
+
+
+            user.IsActivated = true;
+            return _userRepository.UpdateUser(user);
+        }
+
+        public bool DisableUser(Guid userId)
+        {
+            var user = _userRepository.GetUserById(userId);
+            if (user == null)
+                return false;
+
+            user.IsActivated = false;
+            return _userRepository.UpdateUser(user);
+        }
+
+        public IEnumerable<ReservationResponseDto> GetAllReservations(Guid userId)
+        {
+            var user = _userRepository.GetUserById(userId);
+            if (user == null)
+                return null;
+
+
+            var reservations = _userRepository.GetUserReservations(userId)
+;
+
+            return _mapper.Map<IEnumerable<ReservationResponseDto>>(reservations);
         }
     }
 }

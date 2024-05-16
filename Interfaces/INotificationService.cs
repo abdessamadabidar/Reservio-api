@@ -12,5 +12,7 @@ namespace Reservio.Interfaces
         public bool UpdateNotification(NotificationRequestDto notification);
         public bool DeleteNotification(Guid id);
         public bool NotificationExists(Guid id);
+        public bool MarkNotificationAsRead(Guid id);
+        public bool MarkNotificationAsUnread(Guid id);
     }
 }

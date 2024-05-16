@@ -44,6 +44,26 @@ namespace Reservio.Services
             return notification;
         }
 
+        public bool MarkNotificationAsRead(Guid id)
+        {
+            var notificationToMark = _notificationRepository.GetNotificationById(id);
+            if (notificationToMark == null)
+                return false;
+
+            notificationToMark.IsRead = true;
+            return _notificationRepository.UpdateNotification(notificationToMark);
+        }
+
+        public bool MarkNotificationAsUnread(Guid id)
+        {
+            var notificationToMark = _notificationRepository.GetNotificationById(id);
+            if (notificationToMark == null)
+                return false;
+
+            notificationToMark.IsRead = false;
+            return _notificationRepository.UpdateNotification(notificationToMark);
+        }
+
         public bool NotificationExists(Guid id)
         {
             return _notificationRepository.NotificationExists(id);

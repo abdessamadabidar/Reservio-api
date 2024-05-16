@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Tokens;
+using Reservio.Dto;
 using Reservio.Email;
 using Reservio.Helper;
 using Reservio.Interfaces;
@@ -17,43 +19,29 @@ namespace Reservio.Services
         private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
+        private readonly IMapper _mapper;
 
-        public AuthService(IConfiguration configuration, IUserService userService, IEmailService emailService)
+        public AuthService(IConfiguration configuration, IUserService userService, IEmailService emailService, IMapper mapper)
         {
             _configuration = configuration;
             _userService = userService;
             _emailService = emailService;
-            
+            _mapper = mapper;
         }
 
-        public IResult Login(AuthenticateRequest authenticateRequest)
+        public LoginResponseDto Login(AuthenticateRequest authenticateRequest)
         {
-            if (authenticateRequest == null)
-            {
-                return Results.BadRequest("Invalid request");
-            }
-
+           
             var user = _userService.GetUserByEmail(authenticateRequest.Email);
-            if (user == null)
-                return Results.NotFound("User not found!");
-
-
-
-            var matches = user != null && BCrypt.Net.BCrypt.Verify(authenticateRequest.Password, user.Password);
-
-            if (!matches)
-            {
-                return Results.Json("Invalid password!");
-            }
 
             // valid user credentials but not verified
             // send email to user to verify account
             if (user?.VerifiedAt == null)
             {
                 // generate template
-
+                var message = "You are attempting to sign in to your account without being verified, please verify your account by clicking the button below to sign in successfully.";
                 var url = $"https://localhost:7154/api/Auth/Verify/{user?.Id}";
-                var template = _emailService.PrepareEmailTemplate(user?.FirstName, user?.LastName, url);
+                var template = _emailService.PrepareEmailTemplate(user?.FirstName, user?.LastName, message, url);
                 var EmailToSend = new Mail
                 {
                     To = user.Email,
@@ -64,19 +52,31 @@ namespace Reservio.Services
                 try
                 {
                     _emailService.SendEmail(EmailToSend);
+                    return new LoginResponseDto
+                    {
+                        statusCode = 401,
+                        message = "Account not verified"
+                    };
+
                 }
                 catch
                 {
                     throw new Exception("Failed to send email");
                 }
-                return Results.Json("User not verified! We've sent an email to verify your account");
+               
+
+
             }
 
 
-            // user authenticated successfully so generate jwt token
-            var tokenString = GenerateJwtToken(user);
 
-            return Results.Ok(tokenString);
+            // user authenticated successfully so generate jwt token and return user details
+            var tokenString = GenerateJwtToken(user);
+            var userDto = _mapper.Map<LoginResponseDto>(user);
+            userDto.Token = tokenString;
+            userDto.Roles  = _userService.GetUserRoles(user.Id);
+
+            return userDto;
         }
 
         public IResult Register(RegisterRequest registerRequest)
@@ -91,7 +91,7 @@ namespace Reservio.Services
             // check whether user exists and is not deleted
             if (user != null && user.DeletedAt == null)
             {
-                Results.BadRequest(user.Email + " already exists");
+                return Results.BadRequest(user.Email + " already exists");
             }
 
 
@@ -102,8 +102,9 @@ namespace Reservio.Services
 
 
             // Prepare body of email
+            var message = "We are pleased to welcome you to <b>Reservio</b>, your meeting room reservation platform! This email confirms the creation of your account on our platform and we look forward to assisting you with your room reservation needs.";
             var url = $"https://localhost:7154/api/Auth/Verify/{user?.Id}";
-            var template = _emailService.PrepareEmailTemplate(registeredUser.FirstName, registeredUser.LastName, url);
+            var template = _emailService.PrepareEmailTemplate(registeredUser.FirstName, registeredUser.LastName, message, url);
 
            
             // send email to user
@@ -123,7 +124,7 @@ namespace Reservio.Services
                 throw new Exception("Failed to send email");
             }
 
-            return Results.Ok("User regisered successfully! We've sent an email, so please verify your account");
+            return Results.Ok("You have registered successfully! We've sent you an email, so please verify your account");
         }
 
         public bool Verify(Guid Id)
@@ -167,23 +168,25 @@ namespace Reservio.Services
 
         }
 
-        public AuthServiceResult ForgotPassword(string email)
+        public Result ForgotPassword(string email)
         {
             var user = _userService.GetUserByEmail(email);
             if (user == null)
             {
-                return AuthServiceResult.UserNotFound;
+                return Result.UserNotFound;
             }
             try
             {
 
+                var message = "You are attempting to reset your password, please click the button below to reset your password.";
+
                 // generate token and encode it
                 var token = GenerateJwtToken(user);
-                var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-                var url = $"https://localhost:7154/api/Auth/reset-password?token={encodedToken}";
+               //  var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                var url = $"http://localhost:3000/reset-password?token={token}";
 
                 // send email to user to reset password
-                var template = _emailService.PrepareEmailTemplate(user.FirstName, user.LastName, url);
+                var template = _emailService.PrepareEmailTemplate(user.FirstName, user.LastName, message, url);
                 var EmailToSend = new Mail
                 {
                     To = user.Email,
@@ -193,11 +196,11 @@ namespace Reservio.Services
 
             
                 _emailService.SendEmail(EmailToSend);
-                return AuthServiceResult.Success;
+                return Result.Success;
             }
             catch
             {
-                return AuthServiceResult.EmailSendFailure;
+                return Result.EmailSendFailure;
             }
         }
 
@@ -206,25 +209,37 @@ namespace Reservio.Services
             if (token == null)
                 return null;
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]);
+
             try
             {
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                var tokenValidationParameters = new TokenValidationParameters
                 {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
-                    ClockSkew = TimeSpan.Zero
-                }, out SecurityToken validatedToken);
+                    ValidIssuer = _configuration["JWT:ValidIssuer"],
+                    ValidAudience = _configuration["JWT:ValidAudience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]))
+                };
 
-                var jwtToken = (JwtSecurityToken)validatedToken;
-                var userId = Guid.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
+                var tokenHandler = new JwtSecurityTokenHandler();
+                SecurityToken securityToken;
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
+                var jwtSecurityToken = securityToken as JwtSecurityToken;
 
-                // return user id from JWT token if validation successful
-                return userId;
+                if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    throw new SecurityTokenException("Invalid token");
+                }
+
+                var userIdClaim = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    throw new SecurityTokenException("Invalid token");
+                }
+
+                return new Guid(userIdClaim.Value);
             }
             catch
             {

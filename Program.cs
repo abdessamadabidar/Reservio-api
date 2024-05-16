@@ -17,8 +17,6 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
 // Add services to the container.
 
 builder.Services.AddControllers().AddJsonOptions(x =>
@@ -29,19 +27,24 @@ builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
 builder.Services.AddTransient<IReservationService, ReservationService>();
+builder.Services.AddTransient<IEquipmentService, EquipmentService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IEquipmentRepository, EquipmentRepository>();
 builder.Services.AddScoped<IRecurringJob, Reservio.Hangfire.RecurringJob>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 });
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailConfigurations"));
 
 
+DateTime date = DateTime.Now;
+Console.WriteLine(date);
 
 builder.Services.AddHangfire(hangfire =>
 {
@@ -63,7 +66,18 @@ builder.Services.AddHangfire(hangfire =>
   
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowCros", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000")
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials()
+        .SetIsOriginAllowedToAllowWildcardSubdomains();
+    }); 
 
+});
 
 builder.Services.AddAuthentication(options =>
 {
@@ -116,6 +130,8 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+
+
 var app = builder.Build();
 
 
@@ -133,13 +149,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+
+
 app.UseHttpsRedirection();
 
 app.UseHangfireDashboard();
 
 app.UseAuthorization();
 app.UseAuthentication();
+app.UseStaticFiles();
 
+app.UseCors("AllowCros");
 app.MapControllers();
 
 app.Run();

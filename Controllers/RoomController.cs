@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Reservio.Data;
 using Reservio.Dto;
+using Reservio.Helper;
 using Reservio.Interfaces;
 using Reservio.Models;
 using Reservio.Services;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Reservio.Controllers
 {
@@ -14,14 +16,15 @@ namespace Reservio.Controllers
     public class RoomController : Controller
     {
         private readonly IRoomService _roomService;
+        
 
-        public RoomController(IRoomService roomService)
+        public RoomController(IRoomService roomService, IWebHostEnvironment environment)
         {
             _roomService = roomService;
         }
 
 
-        [HttpGet("all")]
+        [HttpGet]
         [ProducesResponseType(200, Type = typeof(ICollection<RoomResponseDto>))]
         public IActionResult GetAllRooms()
         {
@@ -52,7 +55,7 @@ namespace Reservio.Controllers
         [HttpPost]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public IActionResult CreateRoom( [FromBody] RoomResponseDto roomDto )
+        public async Task<IActionResult> CreateRoom( [FromForm] RoomDto roomDto )
         {
             if (roomDto == null)
                 return BadRequest(ModelState);
@@ -71,13 +74,23 @@ namespace Reservio.Controllers
                 return BadRequest(ModelState);
 
 
-            if (!_roomService.CreateRoom(roomDto))
+            
+            var result = await _roomService.CreateRoom(roomDto);
+
+
+            if (result == Result.CreateRoomFailure)
             {
                 ModelState.AddModelError("", "Something went wrong while saving");
                 return StatusCode(500, ModelState);
             }
 
-            return Ok("Successfully created");
+            if (result == Result.UploadImageFailure)
+            {
+                ModelState.AddModelError("", "Something went wrong while uploading the image");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Room successfully created");
         }
 
         [HttpPut("{RoomId:guid}")]
@@ -112,26 +125,31 @@ namespace Reservio.Controllers
             return Ok("Room updated successfully");
         }
 
-        [HttpDelete("{RoomId:guid}")]
-        [ProducesResponseType(204)]
+
+
+        [HttpDelete("{roomId:guid}")]
+        [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult DeleteUser(Guid roomId)
+        public IActionResult DeleteRoom(Guid roomId)
         {
             if (!_roomService.RoomExists(roomId))
             {
-                return NotFound();
+                return NotFound("Room not found");
             }
 
 
-            if (!ModelState.IsValid)
+            var room = _roomService.GetRoomById(roomId);
+            if (room.DeletedAt != null)
             {
-                return BadRequest(ModelState);
+                ModelState.AddModelError("", $"Room not found");
+                return StatusCode(404, ModelState);
             }
+
 
             if (!_roomService.DeleteRoom(roomId))
             {
-                ModelState.AddModelError("", "Something went wrong deleting the room");
+                ModelState.AddModelError("", $"Something went wrong deleting the room with id {roomId}");
                 return StatusCode(500, ModelState);
             }
 
@@ -139,6 +157,26 @@ namespace Reservio.Controllers
         }
 
 
+        [HttpGet("{roomId:guid}/availabilities")]
+        [ProducesResponseType(200, Type = typeof(ICollection<RoomAvailability>))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetRoomAvailability(Guid roomId, [FromQuery] DateTime date)
+        {
+            // The return type of this method is Task<IActionResult> but the return type of the method in the IRoomService interface is Task<ICollection<RoomAvailability>>
+            if (!_roomService.RoomExists(roomId))
+            {
+                return NotFound("Room not found");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+
+            return Ok(await _roomService.GetRoomAvailabilities(roomId, date));
+        }
 
     }
 }

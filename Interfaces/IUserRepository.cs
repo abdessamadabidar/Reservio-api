@@ -15,6 +15,7 @@ namespace Reservio.Interfaces
         User GetUserByEmail(string email);
         IEnumerable<string> GetUserRoles(Guid UserId);
         IEnumerable<Notification> GetUserNotifications(Guid UserId);
+        IEnumerable<Reservation> GetUserReservations(Guid UserId);
         bool Save();
     }
 }

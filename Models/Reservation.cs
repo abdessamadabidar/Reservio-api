@@ -19,9 +19,9 @@ namespace Reservio.Models
         [ForeignKey("UserId")]
         public Guid UserId { get; set; }
 
+        public User User { get; set; } = null!;
         [ForeignKey("RoomId")]
         public Guid RoomId { get; set; }
-        public User User { get; set; } = null!;
         public Room Room { get; set; } = null!;
         
 

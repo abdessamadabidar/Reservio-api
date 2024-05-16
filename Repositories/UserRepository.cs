@@ -49,6 +49,16 @@ namespace Reservio.Repositories
                 .ToList();
         }
 
+        public IEnumerable<Reservation> GetUserReservations(Guid UserId)
+        {
+            return _context.Reservations
+                .Include(reservation => reservation.Room)
+                .Where(reservation => reservation.UserId == UserId)
+                .OrderByDescending(reservation => reservation.CreatedAt)
+                .ToList();
+
+        }
+
         public IEnumerable<string> GetUserRoles(Guid userId)
         {
             return from role in _context.Roles

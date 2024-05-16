@@ -85,6 +85,20 @@ namespace Reservio.Controllers
                 return StatusCode(400, ModelState);
             }
 
+            
+            var user = _userService.GetUserById(reservationRequestDto.UserId);
+            if (!user.IsApproved)
+            {
+                ModelState.AddModelError("User", "User is not approved");
+                return StatusCode(400, ModelState);
+            }
+
+
+            if (!user.IsActivated)
+            {
+                ModelState.AddModelError("User", "User is not activated");
+                return StatusCode(400, ModelState);
+            }
 
 
             var result = await _reservationService.CreateReservationAsync(reservationRequestDto);
@@ -103,7 +117,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult actionResult(Guid reservationId, [FromBody] ReservationRequestDto UpdatedReservationDto)
+        public IActionResult UpdateReservation(Guid reservationId, [FromBody] ReservationRequestDto UpdatedReservationDto)
         {
             if (UpdatedReservationDto == null || reservationId != UpdatedReservationDto.Id)
             {
@@ -140,7 +154,7 @@ namespace Reservio.Controllers
 
             if (!_reservationService.UpdateReservation(UpdatedReservationDto))
             {
-                ModelState.AddModelError("", $"Something went wrong updating the reservation {UpdatedReservationDto.Description}");
+                ModelState.AddModelError("", $"Something went wrong updating the reservation {UpdatedReservationDto.Id}");
                 return StatusCode(500, ModelState);
             }
 

@@ -61,7 +61,7 @@
 														color: #2563eb;
 														font-family: Shrikhand,
 															cursive;
-														font-weight: 500;
+														font-weight: 800;
 														font-size: 35px;
 													">
                                                 Reservio
@@ -188,7 +188,7 @@
                                 <tr>
                                     <td align="center"
                                         style="
-												color: #888888;
+												color: #0f172a;
 												font-size: 16px;
 												font-family: 'Poppins',
 												sans-serif;
@@ -196,20 +196,13 @@
 												font-weight: 300;
 											">
                                         <div style="line-height: 24px">
-                                            Dear {{first name}} {{last name}},
-                                            <p>
-
-                                                We are pleased to welcome you to <b>Reservio</b>, your meeting room reservation platform! This email confirms the creation of your account on our platform and we look forward to assisting you with your room reservation needs.
-
-
-                                            </p>
-
+                                            Dear {{firstname}} {{lastname}},
+                                            <p style="color: #0f172a ">{{message}}</p>
                                             <span class="d-block">
                                                 Here's a summary of your account information:
-
                                             </span>
                                             <span class="d-block">
-                                                Username: {{first name}} {{Last Name}}
+                                                Username: {{firstname}} {{lastname}}
                                             </span>
 
                                         </div>
@@ -324,7 +317,7 @@
 														color: #2563eb;
 														font-family: Shrikhand,
 															cursive;
-														font-weight: 500;
+														font-weight: 800;
 														font-size: 28px;
 													">
                                                 Reservio

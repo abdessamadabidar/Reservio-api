@@ -137,5 +137,54 @@ namespace Reservio.Controllers
 
             return NoContent();
         }
+
+
+        [HttpPut("{NotificationId:guid}/read")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)] 
+        public IActionResult MarkNotificationAsRead(Guid NotificationId)
+        {
+            if (!_notificationService.NotificationExists(NotificationId))
+                return NotFound("Notification not found");
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+
+            if (!_notificationService.MarkNotificationAsRead(NotificationId))
+            {
+                ModelState.AddModelError("Notification", "Could not mark notification as read");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        [HttpPut("{NotificationId:guid}/unread")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult MarkNotificationAsUnread(Guid NotificationId)
+        {
+            if (!_notificationService.NotificationExists(NotificationId))
+                return NotFound("Notification not found");
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+
+            if (!_notificationService.MarkNotificationAsUnread(NotificationId))
+            {
+                ModelState.AddModelError("Notification", "Could not mark notification as read");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
     }
 }

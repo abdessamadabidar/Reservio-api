@@ -85,10 +85,6 @@ namespace Reservio.Services
                 return false;
             }
 
-            if (!UserCanReserve(reservationRequestDto.UserId))
-            {
-                return false;
-            }
 
             var reservation = _mapper.Map<Reservation>(reservationRequestDto);
             return _reservationRepository.UpdateReservation(reservation);

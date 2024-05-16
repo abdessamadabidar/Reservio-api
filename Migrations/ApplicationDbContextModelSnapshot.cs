@@ -22,6 +22,24 @@ namespace Reservio.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Reservio.Models.Equipment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Equipments");
+                });
+
             modelBuilder.Entity("Reservio.Models.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -137,7 +155,8 @@ namespace Reservio.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
@@ -145,7 +164,7 @@ namespace Reservio.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("ImagePath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -161,6 +180,21 @@ namespace Reservio.Migrations
                         .IsUnique();
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("Reservio.Models.RoomEquipment", b =>
+                {
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EquipmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("RoomId", "EquipmentId");
+
+                    b.HasIndex("EquipmentId");
+
+                    b.ToTable("RoomEquipments");
                 });
 
             modelBuilder.Entity("Reservio.Models.User", b =>
@@ -229,7 +263,7 @@ namespace Reservio.Migrations
                     b.HasOne("Reservio.Models.Room", "Room")
                         .WithMany("Reservations")
                         .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Reservio.Models.User", "User")
@@ -262,6 +296,30 @@ namespace Reservio.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Reservio.Models.RoomEquipment", b =>
+                {
+                    b.HasOne("Reservio.Models.Equipment", "Equipment")
+                        .WithMany("RoomEquipments")
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Reservio.Models.Room", "Room")
+                        .WithMany("RoomEquipments")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Equipment");
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("Reservio.Models.Equipment", b =>
+                {
+                    b.Navigation("RoomEquipments");
+                });
+
             modelBuilder.Entity("Reservio.Models.Role", b =>
                 {
                     b.Navigation("UserRoles");
@@ -270,6 +328,8 @@ namespace Reservio.Migrations
             modelBuilder.Entity("Reservio.Models.Room", b =>
                 {
                     b.Navigation("Reservations");
+
+                    b.Navigation("RoomEquipments");
                 });
 
             modelBuilder.Entity("Reservio.Models.User", b =>

@@ -11,23 +11,30 @@ namespace Reservio.Helper
             CreateMap<User, UserResponseDto>();
             CreateMap<UserResponseDto, User>();
 
-            CreateMap<User, UserDto>();
-            CreateMap<UserDto, User>();
+            CreateMap<User, LoginResponseDto>();
+            CreateMap<LoginResponseDto, User>();
 
 
             CreateMap<User, RegisterRequest>();
             CreateMap<RegisterRequest, User>();
 
+            CreateMap<UserDto, User>();
+            CreateMap<User, UserDto>();
+
 
             CreateMap<User, RegisterResponse>();
             CreateMap<RegisterResponse, User>();
 
+            CreateMap<User, UpdateUserDto>();
+            CreateMap<UpdateUserDto, User>();
+        
 
             CreateMap<Room, RoomResponseDto>();
             CreateMap<RoomResponseDto, Room>();
             
             CreateMap<Room, RoomDto>();
             CreateMap<RoomDto, Room>();
+
 
 
             CreateMap<Notification, NotificationRequestDto>();
@@ -43,7 +50,15 @@ namespace Reservio.Helper
             CreateMap<ReservationResponseDto, Reservation>();
           
 
+            CreateMap<Equipment, EquipmentDto>();
+            CreateMap<EquipmentDto, Equipment>();
 
+            CreateMap<RoomEquipment, RoomEquipmentDto>();
+            CreateMap<RoomEquipmentDto, RoomEquipment>();
+
+
+            CreateMap<Reservation, RoomAvailability>();
+            CreateMap<RoomAvailability, Reservation>();
         }
     }
 }

@@ -12,7 +12,8 @@ namespace Reservio.Models
         public string Name { get; set; } = null!;
         public int Capacity { get; set; }
         public string? Description { get; set; }
-        public string? ImageUrl { get; set; }
+        public string? ImagePath { get; set; }
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+        public ICollection<RoomEquipment> RoomEquipments { get; set; } = new List<RoomEquipment>();
     }
 }

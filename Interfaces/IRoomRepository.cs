@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Diagnostics.Eventing.Reader;
+using Reservio.Dto;
 using Reservio.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace Reservio.Interfaces
 {
     public interface IRoomRepository
@@ -7,9 +10,10 @@ namespace Reservio.Interfaces
         ICollection<Room> GetAllRooms();
         bool RoomExists(Guid id);
         Room GetRoomById(Guid roomId);
-        bool CreateRoom(Room roomMap);
+        Task<bool> CreateRoom(Room roomMap);
         bool UpdateRoom(Room roomMap);
-        bool DeleteRoom(Room roomMap);
+        bool DeleteRoom(Room room);
+        Task<ICollection<RoomAvailability>> roomAvailabilities(Guid roomId, DateTime date);
         bool Save();
     }
 }
