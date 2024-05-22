@@ -9,11 +9,13 @@ namespace Reservio.Interfaces
     {
         ICollection<RoomResponseDto> GetAllRooms();
         bool RoomExists(Guid id);
-        Room GetRoomById(Guid roomId);
+        Task<RoomResponseDto> GetRoomResponseById(Guid roomId);
+        Task<Room> GetRoomById(Guid roomId);
         Task<Result> CreateRoom(RoomDto roomDto);
-        bool UpadateRoom(RoomResponseDto roomDto);
-        bool DeleteRoom(Guid roomId);
+        Task<Result> UpdateRoom(RoomRequestDto roomDto);
+        Task<bool> DeleteRoom(Guid roomId);
         Task<ICollection<RoomAvailability>> GetRoomAvailabilities(Guid roomId, DateTime date);
+        Task<Result> UpdateUpdateRoomEquipments(Guid roomId, ICollection<Guid> equipmentIds);
 
     }
 }

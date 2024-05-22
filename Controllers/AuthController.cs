@@ -86,14 +86,14 @@ namespace Reservio.Controllers
         [HttpPost("register")]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(400)]
-        public IResult Register([FromBody] RegisterRequest registerRequest)
+        public async Task<IResult> Register([FromBody] RegisterRequest registerRequest)
         {
             if (!ModelState.IsValid)
             {
                 return Results.BadRequest(ModelState);
             }
 
-            return _authService.Register(registerRequest);
+            return await _authService.Register(registerRequest);
         }
 
 
@@ -102,7 +102,7 @@ namespace Reservio.Controllers
         [HttpGet("verify/{Id:guid}")]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(400)]
-        public IActionResult Verify(Guid Id)
+        public async Task<IActionResult> Verify(Guid Id)
         {
             if (Id == Guid.Empty)
             {
@@ -114,7 +114,7 @@ namespace Reservio.Controllers
                 return BadRequest("User is already verified");
             }
 
-            if (!_authService.Verify(Id))
+            if (!await _authService.Verify(Id))
             {
                 return BadRequest("Could not verify the user");
             }
@@ -157,7 +157,7 @@ namespace Reservio.Controllers
         [HttpPost("reset-password")]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(400)]
-        public IActionResult ResetPassword([FromBody] ResetPasswordRequestDto resetPasswordRequestDto)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto resetPasswordRequestDto)
         {
 
             if (resetPasswordRequestDto.Token == null || resetPasswordRequestDto.Token == "")
@@ -179,7 +179,7 @@ namespace Reservio.Controllers
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(resetPasswordRequestDto.Password);
             User user = _userService.GetUserById(userId.Value);
             user.Password = hashedPassword;
-            if (!_userService.UpdateUser(user))
+            if (!await _userService.UpdateUser(user))
             {
                 return BadRequest("Could not reset password");
             }

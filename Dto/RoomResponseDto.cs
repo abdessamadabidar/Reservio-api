@@ -10,6 +10,7 @@ namespace Reservio.Dto {
         public string? ImagePath { get; set; }
         public DateTime CreatedAt { get; set; }
         public ICollection<RoomEquipmentDto> RoomEquipments { get; set; }
+       
         
    
     }

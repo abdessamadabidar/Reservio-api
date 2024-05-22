@@ -10,6 +10,7 @@ namespace Reservio.Dto
         public string? Description { get; set; }
         public IFormFile? ImageFile { get; set; } = null!;
         public ICollection<EquipmentDto> Equipments { get; set; }
+     
 
     }
 }

@@ -3,6 +3,7 @@ using AutoMapper.Configuration.Annotations;
 using Elfie.Serialization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NuGet.Protocol;
 using Reservio.Data;
 using Reservio.Dto;
@@ -20,20 +21,26 @@ namespace Reservio.Services
         private readonly IMapper _mapper;
         private readonly IEquipmentService _equipmentService;
         private readonly IWebHostEnvironment _environment;
+        private readonly INotificationService _notificationService;
+        private readonly IUserService _userService;
 
 
-        public RoomService(IRoomRepository roomRepository, IMapper mapper, IEquipmentService equipmentService, IWebHostEnvironment environment)
+
+
+        public RoomService(IRoomRepository roomRepository, IMapper mapper, IEquipmentService equipmentService, IWebHostEnvironment environment, INotificationService notificationService, IUserService userService)
         {
             _roomRepository = roomRepository;
             _mapper = mapper;
             _equipmentService = equipmentService;
             _environment = environment;
+            _notificationService = notificationService;
+            _userService = userService;
         }
 
         public async Task<Result> CreateRoom(RoomDto roomDto)
         {
 
-            
+
 
             var room = new Room
             {
@@ -65,45 +72,52 @@ namespace Reservio.Services
                         EquipmentId = equipmentDto.Id,
                         RoomId = room.Id,
                         Room = room,
-                       
+
                     });
                 }
             }
 
 
-            _roomRepository.Save();
+            await _roomRepository.Save();
 
-            
-            await UploadImage(roomDto.ImageFile, room.Id);
+
+            await UploadImage(roomDto?.ImageFile, room.Id);
 
             string imagePath = GetImageByRoom(room.Id);
             room.ImagePath = imagePath;
 
-           if(!_roomRepository.UpdateRoom(room))
+            if (!await _roomRepository.UpdateRoom(room))
             {
                 return Result.UploadImageFailure;
             }
 
 
+            // send notification to admin
+            var adminsId = await _userService.GetAdmins();
+            string title = "New Room";
+            string body = $"New room with name {room.Name} has been added successfully to the database";
+
+            _notificationService.Notifiy(adminsId, title, body);
+
             return Result.Success;
 
-            
+
         }
 
-        public bool DeleteRoom(Guid roomId)
+        public async Task<bool> DeleteRoom(Guid roomId)
         {
-            var roomToDelete = _roomRepository.GetRoomById(roomId);
+            var roomToDelete = await _roomRepository.GetRoomById(roomId);
             if (roomToDelete == null)
             {
                 return false;
             }
-            return _roomRepository.DeleteRoom(roomToDelete);
+            return await _roomRepository.DeleteRoom(roomToDelete);
         }
 
         public ICollection<RoomResponseDto> GetAllRooms()
         {
 
-            return _mapper.Map<List<RoomResponseDto>>(_roomRepository.GetAllRooms()); 
+            return _mapper.Map<List<RoomResponseDto>>(_roomRepository.GetAllRooms());
         }
 
         public async Task<ICollection<RoomAvailability>> GetRoomAvailabilities(Guid roomId, DateTime date)
@@ -112,28 +126,97 @@ namespace Reservio.Services
             return await _roomRepository.roomAvailabilities(roomId, date);
         }
 
-        public Room GetRoomById(Guid roomId)
+        public async Task<RoomResponseDto> GetRoomResponseById(Guid roomId)
         {
-            return _roomRepository.GetRoomById(roomId);
+            var room = _mapper.Map<RoomResponseDto>(await _roomRepository.GetRoomById(roomId));
+            return room;
         }
+
+
         public bool RoomExists(Guid id)
         {
             return _roomRepository.RoomExists(id);
         }
 
-        public bool UpadateRoom(RoomResponseDto roomDto)
+
+
+        public async Task<Result> UpdateRoom(RoomRequestDto roomDto)
         {
-            var roomMap = _mapper.Map<Room>(roomDto);
-            return _roomRepository.UpdateRoom(roomMap);
+
+            // Fetch the room entity asynchronously
+            var room = await _roomRepository.GetRoomById(roomDto.Id);
+
+            if (room == null)
+            {
+                return Result.RoomNotFound;
+            }
+
+
+
+            // Handle image upload
+            try
+            {
+                await UploadImage(roomDto?.ImageFile, room.Id);
+            }
+            catch
+            {
+                return Result.UploadImageFailure;
+            }
+
+            // Retrieve the image path
+            string imagePath = GetImageByRoom(room.Id);
+
+
+            // Update room details
+            room.Name = roomDto.Name;
+            room.Capacity = roomDto.Capacity;
+            room.Description = roomDto.Description;
+            room.ImagePath = imagePath;
+
+
+            // Update the room entity in the repository
+            bool updateResult = await _roomRepository.UpdateRoom(room);
+            if (!updateResult)
+            {
+                return Result.UpdateRoomFailure;
+            }
+
+            return Result.Success;
+
+
+
+
+
         }
 
+        public async Task<Result> UpdateUpdateRoomEquipments(Guid roomId, ICollection<Guid> equipmentIds)
+        {
+            if (equipmentIds == null)
+            {
+                return Result.UpdateRoomFailure;
+            }
 
+            await _roomRepository.ClearRoomEquipments(roomId);
+
+
+            foreach (var equipmentId in equipmentIds)
+            {
+                var equipment = await _equipmentService.GetEquipmentById(equipmentId);
+                if (equipment != null)
+                {
+                    await _roomRepository.AddRoomEquipments(roomId, equipmentId);
+                }
+
+            }
+
+            return Result.Success;
+        }
 
         private string GetFilePath(Guid roomId)
         {
             return this._environment.WebRootPath + "\\Uploads\\Room\\" + roomId;
         }
-    
+
         private string GetImageByRoom(Guid roomId)
         {
             string ImageUrl = string.Empty;
@@ -155,12 +238,17 @@ namespace Reservio.Services
 
         }
 
+        async Task<Room> IRoomService.GetRoomById(Guid roomId)
+        {
+            return await _roomRepository.GetRoomById(roomId);
+        }
+
         private async Task UploadImage(IFormFile image, Guid roomId)
         {
 
             try
             {
-                
+
 
                 if (image != null && image.Length > 0)
                 {
@@ -188,18 +276,18 @@ namespace Reservio.Services
 
                     using (FileStream stream = System.IO.File.Create(ImagePath))
                     {
-                        await image.CopyToAsync(stream);
+                        await image?.CopyToAsync(stream);
 
                     }
 
 
                 }
-                
+
 
             }
             catch
             {
-                
+
             }
 
 

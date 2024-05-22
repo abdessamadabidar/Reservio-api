@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using MimeKit.Encodings;
 using Reservio.Dto;
 using Reservio.Helper;
 using Reservio.Interfaces;
@@ -64,13 +65,13 @@ namespace Reservio.Controllers
             return Ok(users);
         }
 
-        
+
 
         [HttpPut("{UserId:guid}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult UpdateUser(Guid UserId, [FromBody] UpdateUserDto updatedUserDto)
+        public async Task<IActionResult> UpdateUser(Guid UserId, [FromBody] UpdateUserDto updatedUserDto)
         {
             if (updatedUserDto == null)
             {
@@ -87,10 +88,10 @@ namespace Reservio.Controllers
             {
                 return BadRequest(ModelState);
             }
-            
-            
 
-            if (!_userService.UpdateUser(updatedUserDto))
+
+
+            if (!await _userService.UpdateUser(updatedUserDto))
             {
                 ModelState.AddModelError("", $"Something went wrong updating the user {updatedUserDto.Email}");
                 return StatusCode(500, ModelState);
@@ -110,7 +111,7 @@ namespace Reservio.Controllers
                 return NotFound();
             }
 
-            
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -161,8 +162,8 @@ namespace Reservio.Controllers
                 return BadRequest(ModelState);
             }
 
-             
-           var reservations = _userService.GetAllReservations(userId);
+
+            var reservations = _userService.GetAllReservations(userId);
 
 
             return Ok(reservations);
@@ -197,7 +198,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult ChangePassword(Guid userId, [FromBody] ChangePasswordRequestDto changePasswordRequest)
+        public async Task<IActionResult> ChangePassword(Guid userId, [FromBody] ChangePasswordRequestDto changePasswordRequest)
         {
 
             if (!ModelState.IsValid || changePasswordRequest == null)
@@ -206,7 +207,7 @@ namespace Reservio.Controllers
             }
 
 
-            var result = _userService.ChangePassword(userId, changePasswordRequest);
+            var result = await _userService.ChangePassword(userId, changePasswordRequest);
 
             if (result == Result.UserNotFound)
             {
@@ -233,9 +234,9 @@ namespace Reservio.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult EnableUser(Guid userId)
+        public async Task<IActionResult> EnableUser(Guid userId)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
@@ -246,7 +247,7 @@ namespace Reservio.Controllers
             }
 
 
-            if (!_userService.EnableUser(userId))
+            if (!await _userService.EnableUser(userId))
             {
                 ModelState.AddModelError("user", "Something went wrong enabling the user");
                 return StatusCode(500, ModelState);
@@ -263,7 +264,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult DisableUser(Guid userId)
+        public async Task<IActionResult> DisableUser(Guid userId)
         {
             if (!ModelState.IsValid)
             {
@@ -276,7 +277,7 @@ namespace Reservio.Controllers
             }
 
 
-            if (!_userService.DisableUser(userId))
+            if (!await _userService.DisableUser(userId))
             {
                 ModelState.AddModelError("user", "Something went wrong disabling the user");
                 return StatusCode(500, ModelState);
@@ -287,6 +288,35 @@ namespace Reservio.Controllers
             return Ok("User disabled successfully");
 
         }
+
+
+
+        [HttpPut("{userId:guid}/approve")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> ApproveUser(Guid userId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!_userService.UserExists(userId))
+            {
+                return NotFound("user not found");
+            }
+
+            if (!await _userService.ApproveUser(userId))
+            {
+                ModelState.AddModelError("user", "Something went wrong approving the user");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("User approved successfully");
+
+        }
+
+
 
 
     }

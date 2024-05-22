@@ -29,7 +29,7 @@ namespace Reservio.Services
                 return false;
 
             return _notificationRepository.DeleteNotification(notificationToDelete);
-           
+
         }
 
         public ICollection<NotificationResponseDto> GetAllNotifications()
@@ -67,6 +67,26 @@ namespace Reservio.Services
         public bool NotificationExists(Guid id)
         {
             return _notificationRepository.NotificationExists(id);
+        }
+
+        public void Notifiy(List<Guid> usersId, string title, string body)
+        {
+            foreach (var userId in usersId)
+            {
+                var notification = new NotificationRequestDto
+                {
+                    Title = title,
+                    Body = body,
+                    UserId = userId,
+                };
+
+                AddNotification(notification);
+            }
+        }
+
+        public async Task<int> UnreadNotificationsCount(Guid userId)
+        {
+            return await _notificationRepository.UnreadNotificationsCount(userId);
         }
 
         public bool UpdateNotification(NotificationRequestDto notificationRequest)

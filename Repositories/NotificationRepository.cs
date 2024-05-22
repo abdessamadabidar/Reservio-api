@@ -1,4 +1,5 @@
-﻿using Reservio.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using Reservio.Data;
 using Reservio.Interfaces;
 using Reservio.Models;
 
@@ -49,6 +50,16 @@ namespace Reservio.Repositories
             return saved > 0;
         }
 
+        public async Task<int> UnreadNotificationsCount(Guid userId)
+        {
+            int count = await _context
+                        .Notifications
+                        .Where(notif => notif.UserId == userId)
+                        .Where(notif => notif.IsRead == false)
+                        .CountAsync();
+
+            return count;
+        }
 
         public bool UpdateNotification(Notification notification)
         {

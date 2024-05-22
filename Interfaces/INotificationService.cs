@@ -14,5 +14,7 @@ namespace Reservio.Interfaces
         public bool NotificationExists(Guid id);
         public bool MarkNotificationAsRead(Guid id);
         public bool MarkNotificationAsUnread(Guid id);
+        public void Notifiy(List<Guid> usersId, string title, string body);
+        public Task<int> UnreadNotificationsCount(Guid userId);
     }
 }

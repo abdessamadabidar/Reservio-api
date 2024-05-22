@@ -16,11 +16,11 @@ namespace Reservio.Repositories
 
         public async Task<bool> CreateReservationAsync(Reservation reservation)
         {
-            using(var transaction = _context.Database.BeginTransaction())
+            using (var transaction = _context.Database.BeginTransaction())
             {
                 try
                 {
-                    
+
                     await _context.Reservations.AddAsync(reservation);
                     await _context.SaveChangesAsync();
                     transaction.Commit();
@@ -32,7 +32,7 @@ namespace Reservio.Repositories
                     return false;
                 }
             }
-            
+
         }
 
         public bool DeleteReservation(Reservation reservation)
@@ -41,13 +41,13 @@ namespace Reservio.Repositories
             return Save();
         }
 
-        public IEnumerable<Reservation> GetAllReservations()
+        public async Task<IEnumerable<Reservation>> GetAllReservations()
         {
-            return _context.Reservations
+            return await _context.Reservations
                 .Include(reservation => reservation.User)
                 .Include(reservation => reservation.Room)
                 .OrderByDescending(reservation => reservation.CreatedAt)
-                .ToList();
+                .ToListAsync();
         }
 
         public Reservation GetReservationById(Guid Id)
@@ -58,7 +58,7 @@ namespace Reservio.Repositories
                 .FirstOrDefault(reservation => reservation.Id == Id);
 
         }
-        
+
         public bool ReservationExists(Guid Id)
         {
             return _context.Reservations.Any(reservation => reservation.Id == Id);

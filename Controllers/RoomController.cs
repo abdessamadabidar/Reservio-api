@@ -16,7 +16,7 @@ namespace Reservio.Controllers
     public class RoomController : Controller
     {
         private readonly IRoomService _roomService;
-        
+
 
         public RoomController(IRoomService roomService, IWebHostEnvironment environment)
         {
@@ -40,9 +40,14 @@ namespace Reservio.Controllers
 
         [HttpGet("{roomId:guid}")]
         [ProducesResponseType(200, Type = typeof(RoomResponseDto))]
-        public IActionResult GetRoomById(Guid roomId)
+        public async Task<IActionResult> GetRoomById(Guid roomId)
         {
-            var room = _roomService.GetRoomById(roomId);
+            var room = await _roomService.GetRoomResponseById(roomId);
+            if (room == null)
+            {
+                return NotFound("Room not found");
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -55,7 +60,7 @@ namespace Reservio.Controllers
         [HttpPost]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> CreateRoom( [FromForm] RoomDto roomDto )
+        public async Task<IActionResult> CreateRoom([FromForm] RoomDto roomDto)
         {
             if (roomDto == null)
                 return BadRequest(ModelState);
@@ -66,7 +71,7 @@ namespace Reservio.Controllers
 
             if (rooms != null)
             {
-                ModelState.AddModelError("", "room already exists");
+                ModelState.AddModelError("Room", "room already exists");
                 return StatusCode(422, ModelState);
             }
 
@@ -74,19 +79,19 @@ namespace Reservio.Controllers
                 return BadRequest(ModelState);
 
 
-            
+
             var result = await _roomService.CreateRoom(roomDto);
 
 
             if (result == Result.CreateRoomFailure)
             {
-                ModelState.AddModelError("", "Something went wrong while saving");
+                ModelState.AddModelError("Room", "Something went wrong while saving");
                 return StatusCode(500, ModelState);
             }
 
             if (result == Result.UploadImageFailure)
             {
-                ModelState.AddModelError("", "Something went wrong while uploading the image");
+                ModelState.AddModelError("Room", "Something went wrong while uploading the image");
                 return StatusCode(500, ModelState);
             }
 
@@ -97,16 +102,22 @@ namespace Reservio.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult UpdateRoom(Guid RoomId, [FromBody] RoomResponseDto UpdatedRoomDto)
+        public async Task<IActionResult> UpdateRoom(Guid RoomId, [FromForm] RoomRequestDto UpdatedRoomDto)
         {
-            if (UpdatedRoomDto == null || RoomId != UpdatedRoomDto.Id)
+            if (UpdatedRoomDto == null)
             {
                 return BadRequest(ModelState);
             }
 
+            if (RoomId != UpdatedRoomDto.Id)
+            {
+                ModelState.AddModelError("Room", "Room id mismatch");
+                return StatusCode(422, ModelState);
+            }
+
             if (!_roomService.RoomExists(RoomId))
             {
-                return NotFound();
+                return NotFound("Room not found");
             }
 
             if (!ModelState.IsValid)
@@ -114,13 +125,21 @@ namespace Reservio.Controllers
                 return BadRequest(ModelState);
             }
 
+            var result = await _roomService.UpdateRoom(UpdatedRoomDto);
 
-
-            if (!_roomService.UpadateRoom(UpdatedRoomDto))
+            if (result == Result.UploadImageFailure)
             {
-                ModelState.AddModelError("", $"Something went wrong updating the room {UpdatedRoomDto.Name}");
+                ModelState.AddModelError("Room", "Something went wrong while uploading the image");
                 return StatusCode(500, ModelState);
             }
+
+            if (result == Result.UpdateRoomFailure)
+            {
+                ModelState.AddModelError("Room", $"Something went wrong updating the room {UpdatedRoomDto.Name}");
+                return StatusCode(500, ModelState);
+            }
+
+
 
             return Ok("Room updated successfully");
         }
@@ -131,7 +150,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult DeleteRoom(Guid roomId)
+        public async Task<IActionResult> DeleteRoom(Guid roomId)
         {
             if (!_roomService.RoomExists(roomId))
             {
@@ -139,17 +158,17 @@ namespace Reservio.Controllers
             }
 
 
-            var room = _roomService.GetRoomById(roomId);
+            var room = await _roomService.GetRoomById(roomId);
             if (room.DeletedAt != null)
             {
-                ModelState.AddModelError("", $"Room not found");
+                ModelState.AddModelError("Room", $"Room not found");
                 return StatusCode(404, ModelState);
             }
 
 
-            if (!_roomService.DeleteRoom(roomId))
+            if (!await _roomService.DeleteRoom(roomId))
             {
-                ModelState.AddModelError("", $"Something went wrong deleting the room with id {roomId}");
+                ModelState.AddModelError("Room", $"Something went wrong deleting the room with id {roomId}");
                 return StatusCode(500, ModelState);
             }
 
@@ -178,5 +197,32 @@ namespace Reservio.Controllers
             return Ok(await _roomService.GetRoomAvailabilities(roomId, date));
         }
 
+
+        [HttpPut("{roomId:guid}/equipments")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateRoomEquipments(Guid roomId, [FromBody] ICollection<Guid> equipmentIds)
+        {
+            if (!_roomService.RoomExists(roomId))
+            {
+                return NotFound("Room not found");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _roomService.UpdateUpdateRoomEquipments(roomId, equipmentIds);
+
+            if (result == Result.UpdateRoomFailure)
+            {
+                ModelState.AddModelError("", "Something went wrong while updating the room equipments");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Room equipments updated successfully");
+        }
     }
 }

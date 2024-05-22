@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Reservio.Dto;
 using Reservio.Interfaces;
 
@@ -20,21 +21,21 @@ namespace Reservio.Controllers
 
 
         [HttpGet]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(200, Type = typeof(ReservationResponseDto))]
 
-        public IActionResult GetAllReservations()
+        public async Task<IActionResult> GetAllReservations()
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            var reservations = _reservationService.GetAllReservations();
+            var reservations = await _reservationService.GetAllReservations();
             return Ok(reservations);
         }
 
         [HttpGet("{Id:guid}")]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(200, Type = typeof(ReservationResponseDto))]
         [ProducesResponseType(404)]
         public IActionResult GetReservationById(Guid Id)
         {
@@ -56,6 +57,8 @@ namespace Reservio.Controllers
         [HttpPost("new")]
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(403)]
         public async Task<IActionResult> AddReservation([FromBody] ReservationRequestDto reservationRequestDto)
         {
             if (!ModelState.IsValid || reservationRequestDto == null)
@@ -79,36 +82,48 @@ namespace Reservio.Controllers
                 return StatusCode(400, ModelState);
             }
 
-            if(reservationRequestDto.StartDateTime < DateTime.UtcNow || reservationRequestDto.EndDateTime < DateTime.UtcNow)
+            if (reservationRequestDto.StartDateTime < DateTime.UtcNow || reservationRequestDto.EndDateTime < DateTime.UtcNow)
             {
-                ModelState.AddModelError("Reservation", "Invalid Date time");
+                ModelState.AddModelError("Reservation", "You cannot reserve at this time");
                 return StatusCode(400, ModelState);
             }
 
-            
+
             var user = _userService.GetUserById(reservationRequestDto.UserId);
             if (!user.IsApproved)
             {
-                ModelState.AddModelError("User", "User is not approved");
+                ModelState.AddModelError("Reservation", "User is not approved");
                 return StatusCode(400, ModelState);
             }
 
 
             if (!user.IsActivated)
             {
-                ModelState.AddModelError("User", "User is not activated");
+                ModelState.AddModelError("Reservation", "User is not activated");
                 return StatusCode(400, ModelState);
             }
 
 
             var result = await _reservationService.CreateReservationAsync(reservationRequestDto);
-            if (!result)
+            if (result == Helper.Result.ReservationFailure)
             {
-                 ModelState.AddModelError("Reservation", "Reservation already registered");
+                ModelState.AddModelError("Reservation", "Reservation faild try again");
                 return StatusCode(500, ModelState);
             }
 
-             
+            if (result == Helper.Result.UserCannotReserve)
+            {
+                ModelState.AddModelError("Reservation", "User has already reserved today");
+                return StatusCode(403, ModelState);
+            }
+
+            if (result == Helper.Result.RoomNotAvailable)
+            {
+                ModelState.AddModelError("Reservation", "Room is not available at this time");
+                return StatusCode(403, ModelState);
+            }
+
+
             return Ok("Reservation added successfully");
         }
 
@@ -117,7 +132,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult UpdateReservation(Guid reservationId, [FromBody] ReservationRequestDto UpdatedReservationDto)
+        public async Task<IActionResult> UpdateReservation(Guid reservationId, [FromBody] ReservationRequestDto UpdatedReservationDto)
         {
             if (UpdatedReservationDto == null || reservationId != UpdatedReservationDto.Id)
             {
@@ -152,7 +167,7 @@ namespace Reservio.Controllers
                 return StatusCode(400, ModelState);
             }
 
-            if (!_reservationService.UpdateReservation(UpdatedReservationDto))
+            if (!await _reservationService.UpdateReservation(UpdatedReservationDto))
             {
                 ModelState.AddModelError("", $"Something went wrong updating the reservation {UpdatedReservationDto.Id}");
                 return StatusCode(500, ModelState);

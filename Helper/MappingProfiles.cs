@@ -35,6 +35,11 @@ namespace Reservio.Helper
             CreateMap<Room, RoomDto>();
             CreateMap<RoomDto, Room>();
 
+            
+
+            CreateMap<Room, RoomRequestDto>();
+            CreateMap<RoomRequestDto, Room>();
+
 
 
             CreateMap<Notification, NotificationRequestDto>();

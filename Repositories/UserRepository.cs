@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Collections.ObjectModel;
+using Microsoft.EntityFrameworkCore;
 using Reservio.Data;
 using Reservio.Interfaces;
 using Reservio.Models;
@@ -8,7 +9,7 @@ namespace Reservio.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly ApplicationDbContext _context;
-        
+
         public UserRepository(ApplicationDbContext context)
         {
             _context = context;
@@ -22,8 +23,20 @@ namespace Reservio.Repositories
 
         public bool DeleteUser(User user)
         {
-              _context.Remove(user);
+            _context.Remove(user);
             return Save();
+        }
+
+        public async Task<List<Guid>> GetAdmins()
+        {
+            var adminsId = await _context
+                .RoleUsers
+                .Where(ru => ru.Role.Name == "ADMIN")
+                .Select(ru => ru.UserId)
+                .ToListAsync();
+
+            return adminsId;
+
         }
 
         public ICollection<User> GetAllUsers()
@@ -82,8 +95,8 @@ namespace Reservio.Repositories
             return saved > 0;
         }
 
-        public bool UpdateUser(User user)
-        { 
+        public async Task<bool> UpdateUser(User user)
+        {
             _context.Update(user);
             return Save();
         }
@@ -93,6 +106,6 @@ namespace Reservio.Repositories
             return _context.Users.Any(user => user.Id == id);
         }
 
-        
+
     }
 }

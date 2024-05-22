@@ -6,24 +6,39 @@ using Reservio.Interfaces;
 using Reservio.Models;
 using System.Runtime.InteropServices.JavaScript;
 
-namespace Reservio.Repositories {
+namespace Reservio.Repositories
+{
     public class RoomRepository : IRoomRepository
     {
         private readonly ApplicationDbContext _context;
-        public RoomRepository(ApplicationDbContext context) { 
-            _context= context;
+        public RoomRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public Task<bool> AddRoomEquipments(Guid roomId, Guid equipmentId)
+        {
+            _context.Add(new RoomEquipment { RoomId = roomId, EquipmentId = equipmentId });
+            return Save();
+        }
+
+        public Task<bool> ClearRoomEquipments(Guid roomId)
+        {
+            var roomEquipments = _context.RoomEquipments.Where(re => re.RoomId == roomId);
+            _context.RoomEquipments.RemoveRange(roomEquipments);
+            return Save();
         }
 
         public async Task<bool> CreateRoom(Room roomMap)
         {
-             _context.Add(roomMap);
-            return Save();
+            _context.Add(roomMap);
+            return await Save();
         }
 
-        public bool DeleteRoom(Room room)
+        public async Task<bool> DeleteRoom(Room room)
         {
             _context.Remove(room);
-            return Save();
+            return await Save();
         }
 
         public ICollection<Room> GetAllRooms()
@@ -32,24 +47,32 @@ namespace Reservio.Repositories {
                 .Rooms
                 .Include(room => room.RoomEquipments)
                 .ThenInclude(roomEquipment => roomEquipment.Equipment)
-                .OrderByDescending(r => r.CreatedAt).ToList();    
+                .OrderByDescending(r => r.CreatedAt).ToList();
         }
 
 
-        public Room GetRoomById(Guid roomId)
+        public async Task<Room> GetRoomById(Guid roomId)
         {
-            return _context.Rooms.Include(room => room.Reservations).Where(r => r.Id == roomId).FirstOrDefault();
+            return _context
+                .Rooms
+                .Include(room => room.Reservations)
+                .Include(room => room.RoomEquipments)
+                .ThenInclude(RoomEquipment => RoomEquipment.Equipment)
+                .Where(r => r.Id == roomId).FirstOrDefault();
         }
 
         public async Task<ICollection<RoomAvailability>> roomAvailabilities(Guid roomId, DateTime date)
         {
-           
+
             var availabilities = await _context
                 .Reservations
                 .Where(
                     reservation => reservation
                                     .StartDateTime
-                                    .Date == date.Date && reservation.DeletedAt == null
+                                    .Date == date.Date
+                                    && reservation.DeletedAt == null
+                                    && reservation.RoomId == roomId
+                                    && reservation.DeletedAt == null
                                     ).Select(reservation => new RoomAvailability
                                     {
                                         RoomId = reservation.RoomId,
@@ -57,7 +80,7 @@ namespace Reservio.Repositories {
                                         EndDateTime = reservation.EndDateTime
                                     }).ToListAsync();
 
-            return  availabilities;
+            return availabilities;
 
         }
 
@@ -66,16 +89,16 @@ namespace Reservio.Repositories {
             return _context.Rooms.Any(room => room.Id == id);
         }
 
-        public bool Save()
+        public async Task<bool> Save()
         {
-            var saved = _context.SaveChanges();
+            var saved = await _context.SaveChangesAsync();
             return saved > 0;
         }
 
-        public bool UpdateRoom(Room roomMap)
+        public async Task<bool> UpdateRoom(Room roomMap)
         {
             _context.Update(roomMap);
-            return Save();
+            return await Save();
         }
     }
 }

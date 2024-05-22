@@ -142,7 +142,7 @@ namespace Reservio.Controllers
         [HttpPut("{NotificationId:guid}/read")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(404)] 
+        [ProducesResponseType(404)]
         public IActionResult MarkNotificationAsRead(Guid NotificationId)
         {
             if (!_notificationService.NotificationExists(NotificationId))
@@ -185,6 +185,27 @@ namespace Reservio.Controllers
             }
 
             return NoContent();
+        }
+
+        [HttpGet("{userId:guid}/unread/count")]
+        [ProducesResponseType(200, Type = typeof(int))]
+        [ProducesResponseType(400)]
+        public async Task<IActionResult> CountUnreadNotifications(Guid userId)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (userId == null)
+            {
+                ModelState.AddModelError("Notification", "User Id is null");
+                return StatusCode(400, ModelState);
+            }
+
+            var count = await _notificationService.UnreadNotificationsCount(userId);
+            return Ok(count);
         }
     }
 }

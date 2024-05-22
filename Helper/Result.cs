@@ -14,6 +14,12 @@
         BadRequest,
         CreateRoomFailure,
         UploadImageFailure,
+        UpdateRoomFailure,
+        RoomNotFound,
+        EquipmentNotFound,
+        UserCannotReserve,
+        RoomNotAvailable,
+        ReservationFailure
 
     }
 }

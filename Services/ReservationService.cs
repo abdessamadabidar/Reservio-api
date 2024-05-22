@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Reservio.Dto;
+using Reservio.Helper;
 using Reservio.Interfaces;
 using Reservio.Models;
 using System.Collections.ObjectModel;
@@ -12,41 +13,62 @@ namespace Reservio.Services
         private readonly IReservationRepository _reservationRepository;
         private readonly IRoomService _roomService;
         private readonly IUserService _userService;
+        private readonly INotificationService _notificationService;
 
-        public ReservationService(IReservationRepository reservationRepository,  IMapper mapper, IRoomService roomService, IUserService userService)
+        public ReservationService(IReservationRepository reservationRepository, IMapper mapper, IRoomService roomService, IUserService userService, INotificationService notificationService)
         {
             _reservationRepository = reservationRepository;
             _mapper = mapper;
             _roomService = roomService;
             _userService = userService;
+            _notificationService = notificationService;
         }
 
-        public async Task<bool> CreateReservationAsync(ReservationRequestDto reservationRequestDto)
+        public async Task<Result> CreateReservationAsync(ReservationRequestDto reservationRequestDto)
         {
 
 
-            if (!IsRoomAvailable(reservationRequestDto.RoomId, reservationRequestDto.StartDateTime, reservationRequestDto.EndDateTime))
+            if (!await IsRoomAvailable(reservationRequestDto.RoomId, reservationRequestDto.StartDateTime, reservationRequestDto.EndDateTime))
             {
-                return false;
+                return Result.RoomNotAvailable;
             }
 
 
             if (!UserCanReserve(reservationRequestDto.UserId))
             {
-                return false;
+                return Result.UserCannotReserve;
             }
 
             try
             {
                 var reservation = _mapper.Map<Reservation>(reservationRequestDto);
-                return await _reservationRepository.CreateReservationAsync(reservation);
+                var res = await _reservationRepository.CreateReservationAsync(reservation);
+                if (!res)
+                {
+                    return Result.ReservationFailure;
+                }
+
+
+                var user = _userService.GetUserById(reservationRequestDto.UserId);
+                var room = await _roomService.GetRoomById(reservationRequestDto.RoomId);
+
+                // send notification to admin
+                var reveivers = await _userService.GetAdmins();
+                reveivers.Append(reservationRequestDto.UserId);
+                string title = "New Reservation";
+                string body = $"The user {user.FirstName} {user.LastName} has reserved the room with name {room.Name} at the day {reservationRequestDto.StartDateTime.ToShortDateString()} from {reservationRequestDto.StartDateTime.ToShortTimeString()} to {reservationRequestDto.EndDateTime.ToShortTimeString()}";
+
+                _notificationService.Notifiy(reveivers, title, body);
+
+                return Result.Success;
             }
 
             catch (Exception ex)
             {
-                return false;
+                return Result.ReservationFailure;
+
             }
-            
+
         }
 
 
@@ -61,10 +83,11 @@ namespace Reservio.Services
             return _reservationRepository.DeleteReservation(reservation);
         }
 
-        public IEnumerable<ReservationResponseDto> GetAllReservations()
+        public async Task<ICollection<ReservationResponseDto>> GetAllReservations()
         {
-            var reservations = _mapper.Map<IEnumerable<ReservationResponseDto>>(_reservationRepository.GetAllReservations());
-            return reservations;
+            var reservations = await _reservationRepository.GetAllReservations();
+            var reservationsDto = _mapper.Map<ICollection<ReservationResponseDto>>(reservations);
+            return reservationsDto;
         }
 
         public ReservationResponseDto GetReservationById(Guid Id)
@@ -78,9 +101,9 @@ namespace Reservio.Services
             return _reservationRepository.ReservationExists(Id);
         }
 
-        public bool UpdateReservation(ReservationRequestDto reservationRequestDto)
+        public async Task<bool> UpdateReservation(ReservationRequestDto reservationRequestDto)
         {
-            if(!IsRoomAvailable(reservationRequestDto.RoomId, reservationRequestDto.StartDateTime, reservationRequestDto.EndDateTime))
+            if (!await IsRoomAvailable(reservationRequestDto.RoomId, reservationRequestDto.StartDateTime, reservationRequestDto.EndDateTime))
             {
                 return false;
             }
@@ -95,12 +118,21 @@ namespace Reservio.Services
 
 
 
-        private bool IsRoomAvailable(Guid roomId, DateTime startDateTime, DateTime endDateTime)
+        private async Task<bool> IsRoomAvailable(Guid roomId, DateTime startDateTime, DateTime endDateTime)
         {
-            var room = _roomService.GetRoomById(roomId);
 
             // Check if the room is available for the requested time
-            if (room.Reservations.Any(r => r.StartDateTime == startDateTime && r.EndDateTime == endDateTime && r.DeletedAt == null))
+
+            var reservations = await _reservationRepository.GetAllReservations();
+
+            bool IsNotAvailable = reservations.Any(
+                    r => r.StartDateTime == startDateTime
+                    && r.EndDateTime == endDateTime
+                    && r.DeletedAt == null
+                    && r.RoomId == roomId
+                );
+
+            if (IsNotAvailable)
             {
                 return false;
             }

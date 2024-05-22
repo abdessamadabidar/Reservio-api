@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using Reservio.Dto;
 using Reservio.Email;
 using Reservio.Helper;
@@ -19,19 +21,21 @@ namespace Reservio.Services
         private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
+        private readonly INotificationService _notificationService;
         private readonly IMapper _mapper;
 
-        public AuthService(IConfiguration configuration, IUserService userService, IEmailService emailService, IMapper mapper)
+        public AuthService(IConfiguration configuration, IUserService userService, IEmailService emailService, INotificationService notificationService, IMapper mapper)
         {
             _configuration = configuration;
             _userService = userService;
             _emailService = emailService;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
 
         public LoginResponseDto Login(AuthenticateRequest authenticateRequest)
         {
-           
+
             var user = _userService.GetUserByEmail(authenticateRequest.Email);
 
             // valid user credentials but not verified
@@ -63,7 +67,6 @@ namespace Reservio.Services
                 {
                     throw new Exception("Failed to send email");
                 }
-               
 
 
             }
@@ -74,16 +77,24 @@ namespace Reservio.Services
             var tokenString = GenerateJwtToken(user);
             var userDto = _mapper.Map<LoginResponseDto>(user);
             userDto.Token = tokenString;
-            userDto.Roles  = _userService.GetUserRoles(user.Id);
+            userDto.Roles = _userService.GetUserRoles(user.Id);
+
+
+            // send notification
+            string title = "Logged In successfully";
+            string body = "Congratulations! You have logged in successfully";
+            _notificationService.Notifiy(new List<Guid>() { user.Id }, title, body);
+
+
 
             return userDto;
         }
 
-        public IResult Register(RegisterRequest registerRequest)
+        public async Task<IResult> Register(RegisterRequest registerRequest)
         {
             if (registerRequest == null)
             {
-                 return Results.BadRequest("Invalid request");
+                return Results.BadRequest("Invalid request");
             }
 
             var user = _userService.GetUserByEmail(registerRequest.Email);
@@ -95,7 +106,7 @@ namespace Reservio.Services
             }
 
 
-            var registeredUser = _userService.RegisterUser(registerRequest);
+            var registeredUser = await _userService.RegisterUser(registerRequest);
             if (registeredUser is null)
                 return Results.Json($"Something went wrong updating the user {registerRequest.Email}");
 
@@ -106,7 +117,7 @@ namespace Reservio.Services
             var url = $"https://localhost:7154/api/Auth/Verify/{user?.Id}";
             var template = _emailService.PrepareEmailTemplate(registeredUser.FirstName, registeredUser.LastName, message, url);
 
-           
+
             // send email to user
             var EmailToSend = new Mail
             {
@@ -124,12 +135,18 @@ namespace Reservio.Services
                 throw new Exception("Failed to send email");
             }
 
+
+            // send notification
+            string title = "Welcome to Our Community!";
+            string body = "Congratulations! You account has been created. Now you can start booking";
+            _notificationService.Notifiy(new List<Guid>() { registeredUser.Id }, title, body);
+
             return Results.Ok("You have registered successfully! We've sent you an email, so please verify your account");
         }
 
-        public bool Verify(Guid Id)
+        public async Task<bool> Verify(Guid Id)
         {
-            return _userService.VerifyUser(Id);
+            return await _userService.VerifyUser(Id);
         }
 
         public bool UserVerified(Guid Id)
@@ -164,7 +181,7 @@ namespace Reservio.Services
         );
 
 
-           return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(token);
 
         }
 
@@ -182,7 +199,7 @@ namespace Reservio.Services
 
                 // generate token and encode it
                 var token = GenerateJwtToken(user);
-               //  var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                //  var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
                 var url = $"http://localhost:3000/reset-password?token={token}";
 
                 // send email to user to reset password
@@ -194,7 +211,7 @@ namespace Reservio.Services
                     Body = template
                 };
 
-            
+
                 _emailService.SendEmail(EmailToSend);
                 return Result.Success;
             }

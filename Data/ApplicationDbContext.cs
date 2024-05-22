@@ -7,10 +7,10 @@ namespace Reservio.Data
 {
     public class ApplicationDbContext : DbContext
     {
-       public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-       {
-       }
-        
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+        }
+
         public DbSet<User> Users { get; set; }
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
@@ -19,7 +19,7 @@ namespace Reservio.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Equipment> Equipments { get; set; }
         public DbSet<RoomEquipment> RoomEquipments { get; set; }
-         
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -63,7 +63,7 @@ namespace Reservio.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
 
-           
+
 
 
 
@@ -97,11 +97,14 @@ namespace Reservio.Data
             modelBuilder.Entity<Room>()
                 .HasQueryFilter(room => room.DeletedAt == null);
 
+            modelBuilder.Entity<Reservation>()
+                .HasQueryFilter(Reservation => Reservation.DeletedAt == null);
+
             modelBuilder.Entity<Equipment>()
                 .HasIndex(e => e.Name)
                 .IsUnique();
 
-           
+
 
         }
 
@@ -126,7 +129,7 @@ namespace Reservio.Data
             }
 
 
-          
+
 
 
             var recentlyAddedUsers = ChangeTracker
@@ -139,11 +142,11 @@ namespace Reservio.Data
                 var role = Roles?.FirstOrDefault(r => r.Name == "USER");
                 if (role != null)
                 {
-                    user.UserRoles.Add(new RoleUser { RoleId = role.Id, UserId = user.Id,  User = user, Role = role });
+                    user.UserRoles.Add(new RoleUser { RoleId = role.Id, UserId = user.Id, User = user, Role = role });
                 }
             }
 
-           
+
             return base.SaveChanges();
         }
 

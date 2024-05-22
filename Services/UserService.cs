@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Identity.Client;
 using Reservio.Dto;
 using Reservio.Helper;
 using Reservio.Interfaces;
@@ -17,7 +18,7 @@ namespace Reservio.Services
             _mapper = mapper;
         }
 
-        public RegisterResponse RegisterUser(RegisterRequest registerRequest)
+        public async Task<RegisterResponse> RegisterUser(RegisterRequest registerRequest)
         {
             registerRequest.Password = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password);
             var userMap = _mapper.Map<User>(registerRequest);
@@ -31,7 +32,9 @@ namespace Reservio.Services
                 user.CreatedAt = DateTime.Now;
                 user.VerifiedAt = null;
 
-                if (!_userRepository.UpdateUser(user))
+                var rs = await _userRepository.UpdateUser(user);
+
+                if (!rs)
                     return null;
             }
 
@@ -70,7 +73,7 @@ namespace Reservio.Services
             return _mapper.Map<IEnumerable<UserResponseDto>>(_userRepository.GetUsersByRole(roleName));
         }
 
-        public bool UpdateUser(UpdateUserDto updateUserDto)
+        public async Task<bool> UpdateUser(UpdateUserDto updateUserDto)
         {
 
             var user = _userRepository.GetUserById(updateUserDto.Id);
@@ -79,8 +82,8 @@ namespace Reservio.Services
 
             _mapper.Map(updateUserDto, user);
 
-   
-            return _userRepository.UpdateUser(user);
+
+            return await _userRepository.UpdateUser(user);
         }
 
         public bool UserExists(Guid id)
@@ -93,14 +96,14 @@ namespace Reservio.Services
             return _mapper.Map<ICollection<UserResponseDto>>(_userRepository.GetAllUsers());
         }
 
-        public bool VerifyUser(Guid id)
+        public async Task<bool> VerifyUser(Guid id)
         {
             var user = _userRepository.GetUserById(id);
             if (user == null)
                 return false;
 
             user.VerifiedAt = DateTime.Now;
-            return _userRepository.UpdateUser(user);
+            return await _userRepository.UpdateUser(user);
 
         }
 
@@ -123,12 +126,12 @@ namespace Reservio.Services
             return notifications;
         }
 
-        public bool UpdateUser(User user)
+        public async Task<bool> UpdateUser(User user)
         {
-            return _userRepository.UpdateUser(user);
+            return await _userRepository.UpdateUser(user);
         }
 
-        public Result ChangePassword(Guid userId, ChangePasswordRequestDto changePasswordRequestDto)
+        public async Task<Result> ChangePassword(Guid userId, ChangePasswordRequestDto changePasswordRequestDto)
         {
             var user = _userRepository.GetUserById(userId);
             if (user == null)
@@ -140,10 +143,10 @@ namespace Reservio.Services
             user.Password = BCrypt.Net.BCrypt.HashPassword(changePasswordRequestDto.NewPassword);
 
 
-            return _userRepository.UpdateUser(user) ? Result.Success : Result.ChangePasswordFailure;
+            return await _userRepository.UpdateUser(user) ? Result.Success : Result.ChangePasswordFailure;
         }
 
-        public bool EnableUser(Guid userId)
+        public async Task<bool> EnableUser(Guid userId)
         {
             var user = _userRepository.GetUserById(userId);
             if (user == null)
@@ -151,18 +154,29 @@ namespace Reservio.Services
 
 
             user.IsActivated = true;
-            return _userRepository.UpdateUser(user);
+            return await _userRepository.UpdateUser(user);
         }
 
-        public bool DisableUser(Guid userId)
+        public async Task<bool> DisableUser(Guid userId)
         {
             var user = _userRepository.GetUserById(userId);
             if (user == null)
                 return false;
 
             user.IsActivated = false;
-            return _userRepository.UpdateUser(user);
+            return await _userRepository.UpdateUser(user);
         }
+
+        public async Task<bool> ApproveUser(Guid userId)
+        {
+            var user = _userRepository.GetUserById(userId);
+            if (user == null)
+                return false;
+
+            user.IsApproved = true;
+            return await _userRepository.UpdateUser(user);
+        }
+
 
         public IEnumerable<ReservationResponseDto> GetAllReservations(Guid userId)
         {
@@ -175,6 +189,11 @@ namespace Reservio.Services
 ;
 
             return _mapper.Map<IEnumerable<ReservationResponseDto>>(reservations);
+        }
+
+        public async Task<List<Guid>> GetAdmins()
+        {
+            return await _userRepository.GetAdmins();
         }
     }
 }
