@@ -1,6 +1,9 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol;
 using Reservio.Data;
 using Reservio.Dto;
 using Reservio.Helper;
@@ -13,6 +16,7 @@ namespace Reservio.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class RoomController : Controller
     {
         private readonly IRoomService _roomService;
@@ -26,6 +30,7 @@ namespace Reservio.Controllers
 
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(ICollection<RoomResponseDto>))]
+        [Authorize(Roles = "USER")]
         public IActionResult GetAllRooms()
         {
             var rooms = _roomService.GetAllRooms();
@@ -40,6 +45,7 @@ namespace Reservio.Controllers
 
         [HttpGet("{roomId:guid}")]
         [ProducesResponseType(200, Type = typeof(RoomResponseDto))]
+        [Authorize(Roles = "USER")]
         public async Task<IActionResult> GetRoomById(Guid roomId)
         {
             var room = await _roomService.GetRoomResponseById(roomId);
@@ -58,12 +64,16 @@ namespace Reservio.Controllers
 
 
         [HttpPost]
-        [ProducesResponseType(204)]
+        [ProducesResponseType(200)]
         [ProducesResponseType(400)]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> CreateRoom([FromForm] RoomDto roomDto)
         {
             if (roomDto == null)
                 return BadRequest(ModelState);
+
+            Console.WriteLine("==============================================================");
+            Console.WriteLine(roomDto.ToJson());
 
             var rooms = _roomService.GetAllRooms()
                 .Where(r => r.Name == roomDto.Name)
@@ -102,6 +112,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> UpdateRoom(Guid RoomId, [FromForm] RoomRequestDto UpdatedRoomDto)
         {
             if (UpdatedRoomDto == null)
@@ -150,6 +161,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> DeleteRoom(Guid roomId)
         {
             if (!_roomService.RoomExists(roomId))
@@ -180,6 +192,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200, Type = typeof(ICollection<RoomAvailability>))]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "USER")]
         public async Task<IActionResult> GetRoomAvailability(Guid roomId, [FromQuery] DateTime date)
         {
             // The return type of this method is Task<IActionResult> but the return type of the method in the IRoomService interface is Task<ICollection<RoomAvailability>>
@@ -202,6 +215,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "USER")]
         public async Task<IActionResult> UpdateRoomEquipments(Guid roomId, [FromBody] ICollection<Guid> equipmentIds)
         {
             if (!_roomService.RoomExists(roomId))
@@ -214,7 +228,7 @@ namespace Reservio.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _roomService.UpdateUpdateRoomEquipments(roomId, equipmentIds);
+            var result = await _roomService.UpdateRoomEquipments(roomId, equipmentIds);
 
             if (result == Result.UpdateRoomFailure)
             {

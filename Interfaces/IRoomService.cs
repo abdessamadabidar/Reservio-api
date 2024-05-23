@@ -15,7 +15,7 @@ namespace Reservio.Interfaces
         Task<Result> UpdateRoom(RoomRequestDto roomDto);
         Task<bool> DeleteRoom(Guid roomId);
         Task<ICollection<RoomAvailability>> GetRoomAvailabilities(Guid roomId, DateTime date);
-        Task<Result> UpdateUpdateRoomEquipments(Guid roomId, ICollection<Guid> equipmentIds);
+        Task<Result> UpdateRoomEquipments(Guid roomId, ICollection<Guid> equipmentIds);
 
     }
 }

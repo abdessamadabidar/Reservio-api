@@ -44,6 +44,11 @@ namespace Reservio.Repositories
             return _context.Users.OrderByDescending(user => user.CreatedAt).ToList();
         }
 
+        public async Task<IEnumerable<User>> GetRecentUsers()
+        {
+            return await _context.Users.Take(5).OrderByDescending(user => user.CreatedAt).ToListAsync();
+        }
+
         public User GetUserByEmail(string email)
         {
             return _context.Users.FirstOrDefault(user => user.Email == email);

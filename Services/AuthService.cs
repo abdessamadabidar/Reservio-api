@@ -80,13 +80,6 @@ namespace Reservio.Services
             userDto.Roles = _userService.GetUserRoles(user.Id);
 
 
-            // send notification
-            string title = "Logged In successfully";
-            string body = "Congratulations! You have logged in successfully";
-            _notificationService.Notifiy(new List<Guid>() { user.Id }, title, body);
-
-
-
             return userDto;
         }
 
@@ -114,7 +107,7 @@ namespace Reservio.Services
 
             // Prepare body of email
             var message = "We are pleased to welcome you to <b>Reservio</b>, your meeting room reservation platform! This email confirms the creation of your account on our platform and we look forward to assisting you with your room reservation needs.";
-            var url = $"https://localhost:7154/api/Auth/Verify/{user?.Id}";
+            var url = $"https://localhost:7154/api/Auth/Verify/{registeredUser?.Id}";
             var template = _emailService.PrepareEmailTemplate(registeredUser.FirstName, registeredUser.LastName, message, url);
 
 
@@ -134,6 +127,11 @@ namespace Reservio.Services
             {
                 throw new Exception("Failed to send email");
             }
+
+            var adminsId = await _userService.GetAdmins();
+            string titleToAdmin = "New user joined!";
+            string bodyToAdmin = $"New user with name {registeredUser.FirstName} {registeredUser.LastName} has recently registered, waiting for your approval!";
+            _notificationService.Notifiy(adminsId, titleToAdmin, bodyToAdmin);
 
 
             // send notification
@@ -200,7 +198,7 @@ namespace Reservio.Services
                 // generate token and encode it
                 var token = GenerateJwtToken(user);
                 //  var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-                var url = $"http://localhost:3000/reset-password?token={token}";
+                var url = $"http://localhost:3000/auth/reset-password?token={token}";
 
                 // send email to user to reset password
                 var template = _emailService.PrepareEmailTemplate(user.FirstName, user.LastName, message, url);

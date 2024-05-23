@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Reservio.Dto;
 using Reservio.Interfaces;
@@ -7,6 +9,7 @@ namespace Reservio.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ReservationController : Controller
     {
         private readonly IReservationService _reservationService;
@@ -22,7 +25,7 @@ namespace Reservio.Controllers
 
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(ReservationResponseDto))]
-
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> GetAllReservations()
         {
             if (!ModelState.IsValid)
@@ -37,6 +40,7 @@ namespace Reservio.Controllers
         [HttpGet("{Id:guid}")]
         [ProducesResponseType(200, Type = typeof(ReservationResponseDto))]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "USER")]
         public IActionResult GetReservationById(Guid Id)
         {
             if (!ModelState.IsValid)
@@ -59,6 +63,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(200)]
         [ProducesResponseType(403)]
+        [Authorize(Roles = "USER")]
         public async Task<IActionResult> AddReservation([FromBody] ReservationRequestDto reservationRequestDto)
         {
             if (!ModelState.IsValid || reservationRequestDto == null)
@@ -132,6 +137,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> UpdateReservation(Guid reservationId, [FromBody] ReservationRequestDto UpdatedReservationDto)
         {
             if (UpdatedReservationDto == null || reservationId != UpdatedReservationDto.Id)
@@ -180,6 +186,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "USER")]
         public IActionResult DeleteReservation(Guid reservationId)
         {
             if (!_reservationService.ReservationExists(reservationId))

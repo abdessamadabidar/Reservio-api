@@ -195,5 +195,12 @@ namespace Reservio.Services
         {
             return await _userRepository.GetAdmins();
         }
+
+        public async Task<IEnumerable<UserResponseDto>> GetRecentUsers()
+        {
+            var users = _mapper.Map<IEnumerable<UserResponseDto>>(await _userRepository.GetRecentUsers());
+
+            return users;
+        }
     }
 }

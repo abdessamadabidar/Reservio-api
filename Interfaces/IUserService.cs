@@ -7,6 +7,7 @@ namespace Reservio.Interfaces
     public interface IUserService
     {
         ICollection<UserResponseDto> GetAllUsers();
+        Task<IEnumerable<UserResponseDto>> GetRecentUsers();
         User GetUserById(Guid id);
         IEnumerable<UserResponseDto> GetUsersByRole(string roleName);
         bool UserExists(Guid id);

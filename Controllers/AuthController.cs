@@ -24,7 +24,7 @@ namespace Reservio.Controllers
         private readonly IAuthService _authService;
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
-        private readonly IMapper _mapper; 
+        private readonly IMapper _mapper;
 
         public AuthController(IAuthService authService, IUserService userService, IEmailService emailService, IMapper mapper)
         {
@@ -47,7 +47,7 @@ namespace Reservio.Controllers
                 return BadRequest("Invalid request");
             }
 
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
@@ -143,13 +143,13 @@ namespace Reservio.Controllers
                 return NotFound("User not found");
             }
 
-           
+
             if (result == Result.EmailSendFailure)
             {
                 return BadRequest("Could not send email");
             }
 
-  
+
 
             return Ok("Email sent successfully");
         }
@@ -170,13 +170,13 @@ namespace Reservio.Controllers
                 return BadRequest("Invalid request");
             }
 
-            
+
             var userId = _authService.ValidateToken(resetPasswordRequestDto.Token);
             if (userId == null || (userId.HasValue && !_userService.UserExists(userId.Value)))
                 return BadRequest("Invalid or expired password token");
-             
 
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(resetPasswordRequestDto.Password);
+
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(resetPasswordRequestDto.NewPassword);
             User user = _userService.GetUserById(userId.Value);
             user.Password = hashedPassword;
             if (!await _userService.UpdateUser(user))
@@ -184,7 +184,7 @@ namespace Reservio.Controllers
                 return BadRequest("Could not reset password");
             }
 
-           
+
 
             return Ok("Password reset successfully");
         }

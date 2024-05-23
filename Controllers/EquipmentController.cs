@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Reservio.Dto;
 using Reservio.Interfaces;
 using Reservio.Models;
@@ -7,6 +9,7 @@ namespace Reservio.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class EquipmentController : Controller
     {
 
@@ -20,6 +23,7 @@ namespace Reservio.Controllers
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(ICollection<EquipmentDto>))]
         [ProducesResponseType(400)]
+        [Authorize(Roles = "USER")]
         public async Task<IActionResult> GetAllEquipments()
         {
             if (!ModelState.IsValid)
@@ -35,6 +39,7 @@ namespace Reservio.Controllers
         [HttpPost]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(400)]
+        [Authorize(Roles = "ADMIN")]
         public IActionResult AddNewEquipment([FromBody] EquipmentDto equipmentDto)
         {
             if (!ModelState.IsValid)
@@ -64,6 +69,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200, Type = typeof(EquipmentDto))]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "USER")]
         public async Task<IActionResult> GetEquipmentById(Guid id)
         {
             if (!ModelState.IsValid)

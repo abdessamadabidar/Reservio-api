@@ -140,9 +140,9 @@ namespace Reservio.Data
             foreach (var user in recentlyAddedUsers)
             {
                 var role = Roles?.FirstOrDefault(r => r.Name == "USER");
-                if (role != null)
+                if (role != null && !user.UserRoles.Any(ur => ur.RoleId == role.Id))
                 {
-                    user.UserRoles.Add(new RoleUser { RoleId = role.Id, UserId = user.Id, User = user, Role = role });
+                    user.UserRoles.Add(new RoleUser { RoleId = role.Id, UserId = user.Id });
                 }
             }
 

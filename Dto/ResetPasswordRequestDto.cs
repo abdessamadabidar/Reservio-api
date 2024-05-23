@@ -2,8 +2,8 @@
 {
     public class ResetPasswordRequestDto
     {
-        public string Password { get; set; } = null!;
-        public string PasswordConfirmation { get; set; } = null!;
-        public string Token { get; set; } = null!; 
+        public string NewPassword { get; set; } = null!;
+        public string NewPasswordConfirmation { get; set; } = null!;
+        public string Token { get; set; } = null!;
     }
 }

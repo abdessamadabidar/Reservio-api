@@ -34,7 +34,7 @@ namespace Reservio.Services
             }
 
 
-            if (!UserCanReserve(reservationRequestDto.UserId))
+            if (!await UserCanReserve(reservationRequestDto.UserId, reservationRequestDto.StartDateTime))
             {
                 return Result.UserCannotReserve;
             }
@@ -141,20 +141,17 @@ namespace Reservio.Services
         }
 
 
-        private bool UserCanReserve(Guid userId)
+        private async Task<bool> UserCanReserve(Guid userId, DateTime startDateTime)
         {
-            var StartOfDay = DateTime.Now.Date;
-            var EndOfDay = StartOfDay.AddDays(1).AddTicks(-1);
+            // Check if the user has a reservation on the same day
+            var reservations = await _reservationRepository.GetAllReservations();
+            bool hasReservation = reservations.Any(
+                r => r.UserId == userId
+                && r.DeletedAt == null
+                && r.StartDateTime.Date == startDateTime.Date
+            );
 
-            var user = _userService.GetUserById(userId);
-
-            // Check if the user has a reservation for the requested time
-            if (user.Reservations.Any(r => r.StartDateTime >= StartOfDay && r.StartDateTime <= EndOfDay && r.DeletedAt == null))
-            {
-                return false;
-            }
-
-            return true;
+            return !hasReservation;
         }
     }
 }

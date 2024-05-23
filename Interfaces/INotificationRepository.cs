@@ -10,7 +10,6 @@ namespace Reservio.Interfaces
         bool UpdateNotification(Notification notification);
         bool DeleteNotification(Notification notification);
         bool NotificationExists(Guid id);
-        Task<int> UnreadNotificationsCount(Guid userId);
         bool Save();
     }
 }

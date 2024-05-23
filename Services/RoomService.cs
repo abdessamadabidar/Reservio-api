@@ -69,16 +69,16 @@ namespace Reservio.Services
                 {
                     room.RoomEquipments.Add(new RoomEquipment
                     {
-                        EquipmentId = equipmentDto.Id,
                         RoomId = room.Id,
-                        Room = room,
-
+                        EquipmentId = equipment.Id
                     });
+
+                    await _roomRepository.Save();
                 }
             }
 
 
-            await _roomRepository.Save();
+
 
 
             await UploadImage(roomDto?.ImageFile, room.Id);
@@ -189,7 +189,7 @@ namespace Reservio.Services
 
         }
 
-        public async Task<Result> UpdateUpdateRoomEquipments(Guid roomId, ICollection<Guid> equipmentIds)
+        public async Task<Result> UpdateRoomEquipments(Guid roomId, ICollection<Guid> equipmentIds)
         {
             if (equipmentIds == null)
             {

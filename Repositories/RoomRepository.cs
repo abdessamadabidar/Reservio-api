@@ -72,7 +72,6 @@ namespace Reservio.Repositories
                                     .Date == date.Date
                                     && reservation.DeletedAt == null
                                     && reservation.RoomId == roomId
-                                    && reservation.DeletedAt == null
                                     ).Select(reservation => new RoomAvailability
                                     {
                                         RoomId = reservation.RoomId,

@@ -84,10 +84,6 @@ namespace Reservio.Services
             }
         }
 
-        public async Task<int> UnreadNotificationsCount(Guid userId)
-        {
-            return await _notificationRepository.UnreadNotificationsCount(userId);
-        }
 
         public bool UpdateNotification(NotificationRequestDto notificationRequest)
         {

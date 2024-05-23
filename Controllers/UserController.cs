@@ -1,4 +1,7 @@
-﻿using AutoMapper;
+﻿using System.CodeDom.Compiler;
+using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MimeKit.Encodings;
 using Reservio.Dto;
@@ -10,6 +13,7 @@ namespace Reservio.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class UserController : Controller
     {
         private readonly IUserService _userService;
@@ -21,7 +25,7 @@ namespace Reservio.Controllers
 
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(ICollection<UserResponseDto>))]
-        // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "USER")]
+        [Authorize(Roles = "ADMIN")]
         public IActionResult GetAllUsers()
         {
             var users = _userService.GetAllUsers();
@@ -36,6 +40,7 @@ namespace Reservio.Controllers
         [HttpGet("{UserId:guid}")]
         [ProducesResponseType(200, Type = typeof(UserResponseDto))]
         [ProducesResponseType(400)]
+        [Authorize(Roles = "USER")]
         public IActionResult GetUserById(Guid UserId)
         {
             if (!_userService.UserExists(UserId))
@@ -50,27 +55,12 @@ namespace Reservio.Controllers
             return Ok(user);
         }
 
-        [HttpGet("role/{Role:alpha}")]
-        [ProducesResponseType(200, Type = typeof(IEnumerable<UserResponseDto>))]
-        [ProducesResponseType(400)]
-        public IActionResult GetUserByRole(string Role)
-        {
-
-            var users = _userService.GetUsersByRole(Role);
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            return Ok(users);
-        }
-
-
 
         [HttpPut("{UserId:guid}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "USER")]
         public async Task<IActionResult> UpdateUser(Guid UserId, [FromBody] UpdateUserDto updatedUserDto)
         {
             if (updatedUserDto == null)
@@ -104,6 +94,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "USER")]
         public IActionResult DeleteUser(Guid UserId)
         {
             if (!_userService.UserExists(UserId))
@@ -130,6 +121,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200, Type = typeof(IEnumerable<NotificationResponseDto>))]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "USER")]
         public IActionResult GetUserNotifications(Guid userId)
         {
             if (!_userService.UserExists(userId))
@@ -150,6 +142,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200, Type = typeof(IEnumerable<ReservationResponseDto>))]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "USER")]
         public IActionResult GetUserReservations(Guid userId)
         {
             if (!_userService.UserExists(userId))
@@ -198,6 +191,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "USER")]
         public async Task<IActionResult> ChangePassword(Guid userId, [FromBody] ChangePasswordRequestDto changePasswordRequest)
         {
 
@@ -234,6 +228,7 @@ namespace Reservio.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> EnableUser(Guid userId)
         {
             if (!ModelState.IsValid)
@@ -261,6 +256,7 @@ namespace Reservio.Controllers
 
 
         [HttpPut("{userId:guid}/disable")]
+        [Authorize(Roles = "ADMIN")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -292,6 +288,7 @@ namespace Reservio.Controllers
 
 
         [HttpPut("{userId:guid}/approve")]
+        [Authorize(Roles = "USER")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -316,6 +313,20 @@ namespace Reservio.Controllers
 
         }
 
+        [HttpGet("recent")]
+        [Authorize(Roles = "ADMIN")]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<UserResponseDto>))]
+        [ProducesResponseType(400)]
+        public async Task<IActionResult> GetRecentUsers()
+        {
+            var users = await _userService.GetRecentUsers();
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            return Ok(users);
+        }
 
 
 
